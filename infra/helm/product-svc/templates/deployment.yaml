@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-svc
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: product-svc } }
+  template:
+    metadata:
+      labels: { app: product-svc }
+    spec:
+      containers:
+        - name: product-svc
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef: { name: product-svc-env }
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /, port: 8080 }
+          livenessProbe:
+            httpGet: { path: /, port: 8080 }

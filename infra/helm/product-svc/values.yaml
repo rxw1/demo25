@@ -1,0 +1,15 @@
+image:
+  repository: product-svc
+  tag: latest
+  pullPolicy: IfNotPresent
+
+env:
+  DATABASE_URL: postgres://app:app@pg-postgresql.infra.svc.cluster.local:5432/app?sslmode=disable
+  REDIS_ADDR: redis-master.infra.svc.cluster.local:6379
+  NATS_URL: nats://nats.infra.svc.cluster.local:4222
+  FLAGD_HOST: flagd.app.svc.cluster.local
+  FLAGD_PORT: "8013"
+service:
+  port: 80
+  targetPort: 8080
+

@@ -1,0 +1,4 @@
+image: ghcr.io/open-feature/flagd:latest
+service:
+  port: 8013
+

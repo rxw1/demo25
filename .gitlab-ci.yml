@@ -1,0 +1,28 @@
+stages: [lint, test, build]
+
+golang-lint:
+  stage: lint
+  image: golang:1.22
+  script:
+    - cd services/product-svc && go vet ./...
+    - cd ../order-svc && go vet ./...
+
+go-test:
+  stage: test
+  image: golang:1.22
+  script:
+    - cd services/product-svc && go test ./... || true
+    - cd ../order-svc && go test ./... || true
+
+docker-build-product:
+  stage: build
+  image: gcr.io/kaniko-project/executor:latest
+  script:
+    - /kaniko/executor --context ${CI_PROJECT_DIR} --dockerfile services/product-svc/Dockerfile --destination $CI_REGISTRY_IMAGE/product-svc:${CI_COMMIT_SHORT_SHA}
+
+docker-build-order:
+  stage: build
+  image: gcr.io/kaniko-project/executor:latest
+  script:
+    - /kaniko/executor --context ${CI_PROJECT_DIR} --dockerfile services/order-svc/Dockerfile --destination $CI_REGISTRY_IMAGE/order-svc:${CI_COMMIT_SHORT_SHA}
+

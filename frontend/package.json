@@ -1,0 +1,29 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "codegen": "graphql-codegen --config ./graphql/codegen.ts"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.0.4",
+    "graphql": "^16.11.0",
+    "next": "15.5.2",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "6.0.0",
+    "@graphql-codegen/client-preset": "5.0.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,10 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: poc
+servers: 1
+agents: 1
+ports:
+  - port: 3000:3000
+    nodeFilters: [loadbalancer]
+

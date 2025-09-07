@@ -1,0 +1,43 @@
+services:
+  nats:
+    image: nats:2.10-alpine
+    ports: ["4222:4222", "8222:8222"]
+  postgres:
+    image: bitnami/postgresql:17
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRESQL_USERNAME=app
+      - POSTGRESQL_PASSWORD=app
+      - POSTGRESQL_DATABASE=app
+    ports: ["5432:5432"]
+  mongo:
+    image: bitnami/mongodb:latest
+    ports: ["27017:27017"]
+  redis:
+    image: bitnami/redis:latest
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports: ["6379:6379"]
+  flagd:
+    image: ghcr.io/open-feature/flagd:latest
+    command: ["start", "--uri", "file:/etc/flagd/flags.json"]
+    volumes:
+      - ./infra/helm/flagd/templates/flags.json:/etc/flagd/flags.json:ro
+    ports: ["8013:8013"]
+  product-svc:
+    build: ../services/product-svc
+    environment:
+      - DATABASE_URL=postgres://app:app@postgres:5432/app?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - NATS_URL=nats://nats:4222
+      - FLAGD_HOST=flagd
+      - FLAGD_PORT=8013
+    depends_on: [postgres, redis, nats, flagd]
+    ports: ["8080:8080"]
+  order-svc:
+    build: ../services/order-svc
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - NATS_URL=nats://nats:4222
+    depends_on: [mongo, nats]
+    ports: ["8081:8081"]
