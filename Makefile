@@ -2,9 +2,26 @@
 
 gen: gql fe
 
+# NOTE
+# go run github.com/99designs/gqlgen generate
+# 
+# - directly runs the gqlgen generator via the module path; always executes
+#   gqlgen and writes the generated files.
+# - no reliance on any source comment directives; works anywhere (assuming
+#   module available).
+#
+# go generate ./...
+# 
+# - scans source files for //go:generate comments and runs the commands found
+#   there, package by package.
+# - it does NOT implicitly run gqlgen unless you have a go:generate directive
+#   that calls it (or an installed binary named in the directive).
+# - it will be a no-op if there are no go:generate directives pointing to
+#   gqlgen (or if the directives point to a binary that isn’t installed).
+
 gql:
+	#cd services/product-svc && go generate -v -x ./...
 	cd services/product-svc && go run github.com/99designs/gqlgen generate
-	cd services/product-svc && go generate -v -x ./... # FIXME
 
 fe:
 	cd frontend && npm run codegen || true
