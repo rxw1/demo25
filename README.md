@@ -1,30 +1,34 @@
-# PoC Quickstart
+# Quickstart
 
-## 0) Vorbereitungen
+## Requirements
 
-- Go 1.22, Node 18+, Docker, Docker Compose, k3d, Helm
+- Go 1.25, Node 18+, Docker, Docker Compose, k3d, Helm
 
-## 1) Dev-Loop (Compose)
+## 1) Dev-Loop (using Docker Compose)
 
 - `make dev-up`
-- Seed (einmalig):
-  - `docker exec -it $(docker ps -qf name=postgres) psql -U app -d app -c "create table if not exists products(id text primary key, name text, price int);"`
-  - `docker exec -it $(docker ps -qf name=postgres) psql -U app -d app -c "insert into products(id,name,price) values('p1','Widget',199) on conflict do nothing;"`
+
+```sh
+docker compose -f docker/compose.dev.yml up -d --build
+```
+
 - Services lokal starten (optional) oder via Compose-Images.
-- Frontend: `cd frontend && npm install && npm run dev` (öffnet `http://localhost:3000`)
+
+- Frontend: `cd frontend && npm install && npm run dev` (opens `http://localhost:3000`)
 - GraphQL Playground: `http://localhost:8080` (product-svc)
 
 ## 2) Migration + Seed
 
-- `kubectl apply -f infra/helm/product-svc/templates/configmap-migrations.yaml`
-- `kubectl apply -f infra/helm/product-svc/templates/configmap-seed.yaml`
-- `kubectl apply -f infra/helm/product-svc/templates/job-migrate.yaml`
+- `make seed` (once)
+- `make migration_seed`
 
 ## 3) Kubernetes (k3d + Helm)
 
 - `make k3d-up`
 - `make helm-install`
+
 - Status prüfen: `kubectl get pods -n app` und `kubectl get pods -n infra`
+
 - Port-Forward Frontend (falls containerisiert): `kubectl port-forward svc/product-svc 8080:80 -n app`
 
 ## 4) Frontend über Helm deployen
@@ -37,12 +41,11 @@
 
 ## 6) E2E Test
 
-- `go test ./tests/e2e -v`
+- `make test_e2e`
 
 ## 7) Aufräumen
 
-- `make helm-uninstall && make k3d-down`
-- `make dev-down`
+- `make clean`
 
 Damit ist der PoC skeletonfähig mit Migration/Seed, Frontend Deployment und automatisiertem E2E-Test.
 
