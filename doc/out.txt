@@ -1,0 +1,50 @@
+$ k3d cluster list
+NAME   SERVERS   AGENTS   LOADBALANCER
+poc    1/1       1/1      true
+
+$ k3d node list
+NAME               ROLE           CLUSTER   STATUS
+k3d-poc-agent-0    agent          poc       running
+k3d-poc-server-0   server         poc       running
+k3d-poc-serverlb   loadbalancer   poc       running
+
+$ docker ps --filter name=k3d-poc -a
+CONTAINER ID   IMAGE                            COMMAND                  CREATED              STATUS              PORTS                                                                          NAMES
+23f9d66fb771   ghcr.io/k3d-io/k3d-proxy:5.8.3   "/bin/sh -c nginx-pr…"   About a minute ago   Up 51 seconds       80/tcp, 0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 0.0.0.0:41577->6443/tcp   k3d-poc-serverlb
+87d3574999d8   rancher/k3s:v1.31.5-k3s1         "/bin/k3d-entrypoint…"   About a minute ago   Up About a minute                                                                                  k3d-poc-agent-0
+1cdcb16a5f2f   rancher/k3s:v1.31.5-k3s1         "/bin/k3d-entrypoint…"   About a minute ago   Up About a minute                                                                                  k3d-poc-server-0
+
+$ kubectl cluster-info
+Kubernetes control plane is running at https://0.0.0.0:41577
+CoreDNS is running at https://0.0.0.0:41577/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Metrics-server is running at https://0.0.0.0:41577/api/v1/namespaces/kube-system/services/https:metrics-server:https/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+$ kubectl get nodes -o wide
+NAME               STATUS   ROLES                  AGE   VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE           KERNEL-VERSION                       CONTAINER-RUNTIME
+k3d-poc-agent-0    Ready    <none>                 63s   v1.31.5+k3s1   172.18.0.3    <none>        K3s v1.31.5+k3s1   5.15.167.4-microsoft-standard-WSL2   containerd://1.7.23-k3s2
+k3d-poc-server-0   Ready    control-plane,master   72s   v1.31.5+k3s1   172.18.0.2    <none>        K3s v1.31.5+k3s1   5.15.167.4-microsoft-standard-WSL2   containerd://1.7.23-k3s2
+
+$ kubectl get pods -A
+NAMESPACE     NAME                                      READY   STATUS      RESTARTS   AGE
+kube-system   coredns-ccb96694c-9jh7d                   1/1     Running     0          73s
+kube-system   helm-install-traefik-2btxf                0/1     Completed   1          73s
+kube-system   helm-install-traefik-crd-vb9pb            0/1     Completed   0          73s
+kube-system   local-path-provisioner-5cf85fd84d-w89gf   1/1     Running     0          73s
+kube-system   metrics-server-5985cbc9d7-469sc           1/1     Running     0          73s
+kube-system   svclb-traefik-221e23b9-m5kts              2/2     Running     0          57s
+kube-system   svclb-traefik-221e23b9-xh4cw              2/2     Running     0          57s
+kube-system   traefik-5d45fc8cc9-djt7m                  1/1     Running     0          57s
+
+$ docker ps --filter name=k3d-poc-server -a
+CONTAINER ID   IMAGE                            COMMAND                  CREATED              STATUS              PORTS                                                                          NAMES
+23f9d66fb771   ghcr.io/k3d-io/k3d-proxy:5.8.3   "/bin/sh -c nginx-pr…"   About a minute ago   Up About a minute   80/tcp, 0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 0.0.0.0:41577->6443/tcp   k3d-poc-serverlb
+1cdcb16a5f2f   rancher/k3s:v1.31.5-k3s1         "/bin/k3d-entrypoint…"   About a minute ago   Up About a minute                                                                                  k3d-poc-server-0
+
+$ kubectl get pods -n app
+No resources found in app namespace.
+
+$ kubectl describe pod <flagd-pod> -n
+$ kubectl logs <flagd-pod> -n app --previous
+# NOTE Can't see the <flagd-pod>

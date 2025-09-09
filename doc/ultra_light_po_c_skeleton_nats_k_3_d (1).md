@@ -305,7 +305,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: psql
-          image: bitnami/postgresql:16
+          image: bitnami/postgresql:17
           command: ["/bin/sh","-c"]
           args:
             - >-
@@ -344,7 +344,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: psql
-          image: bitnami/postgresql:16
+          image: bitnami/postgresql:17
           command: ["/bin/sh","-c"]
           args:
             - >-

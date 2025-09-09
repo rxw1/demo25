@@ -120,7 +120,7 @@ services:
     image: nats:2.10-alpine
     ports: ["4222:4222", "8222:8222"]
   postgres:
-    image: bitnami/postgresql:16
+    image: bitnami/postgresql:17
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRESQL_USERNAME=app
