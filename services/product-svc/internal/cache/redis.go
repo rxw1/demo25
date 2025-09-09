@@ -2,8 +2,9 @@ package cache
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	"rxw1/product-svc/internal/logging"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -23,14 +24,16 @@ func New(addr string) *Cache {
 
 // returns redis.Nil error if key does not exist
 func (c *Cache) Get(ctx context.Context, k string) (string, error) {
-	fmt.Println("get cache", k)
+	ctx2 := logging.With(ctx, "k", k)
+	logging.From(ctx2).Debug("cache get")
 	r, err := c.R.Get(ctx, k).Result()
-	fmt.Println("get cache result", r, err)
+	logging.From(ctx2).Debug("cache get result", "result", r, "error", err)
 	return r, err
 }
 
 // ttl 0 means no expiration
 func (c *Cache) Set(ctx context.Context, k, v string, ttl time.Duration) error {
-	fmt.Println("set cache", k, v, ttl)
+	ctx2 := logging.With(ctx, "k", k, "ttl", ttl)
+	logging.From(ctx2).Debug("cache set", "value", v)
 	return c.R.Set(ctx, k, v, ttl).Err()
 }

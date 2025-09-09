@@ -2,7 +2,8 @@ package flags
 
 import (
 	"context"
-	"fmt"
+
+	"rxw1/product-svc/internal/logging"
 
 	of "github.com/open-feature/go-sdk/openfeature"
 )
@@ -18,7 +19,8 @@ func New() *Flags {
 }
 
 func (f *Flags) RedisEnabled(ctx context.Context) bool {
+	ctx2 := logging.With(ctx, "flag", "redisCacheEnabled")
 	val, err := f.client.BooleanValue(ctx, "redisCacheEnabled", false, of.EvaluationContext{})
-	fmt.Println("flag redisCacheEnabled", val, err)
+	logging.From(ctx2).Debug("flag redisCacheEnabled", "value", val, "error", err)
 	return err == nil && val
 }
