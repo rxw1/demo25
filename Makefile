@@ -4,14 +4,14 @@ gen: gql fe
 
 # NOTE
 # go run github.com/99designs/gqlgen generate
-# 
+#
 # - directly runs the gqlgen generator via the module path; always executes
 #   gqlgen and writes the generated files.
 # - no reliance on any source comment directives; works anywhere (assuming
 #   module available).
 #
 # go generate ./...
-# 
+#
 # - scans source files for //go:generate comments and runs the commands found
 #   there, package by package.
 # - it does NOT implicitly run gqlgen unless you have a go:generate directive
@@ -52,9 +52,11 @@ helm-install: helm-deps
 	helm upgrade --install pg bitnami/postgresql -n infra --set auth.postgresPassword=postgres
 	helm upgrade --install mongo bitnami/mongodb -n infra
 	helm upgrade --install redis bitnami/redis -n infra --set architecture=standalone
+	helm upgrade --install infra-jobs infra/helm/infra-jobs -n infra
 	helm upgrade --install flagd infra/helm/flagd -n app --create-namespace
 	helm upgrade --install product-svc infra/helm/product-svc -n app
 	helm upgrade --install order-svc infra/helm/order-svc -n app
+	helm upgrade --install frontend infra/helm/frontend -n app
 
 helm-uninstall:
 	helm uninstall product-svc order-svc -n app || true

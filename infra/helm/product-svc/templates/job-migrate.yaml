@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: product-svc-migrate
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: product-svc:latest
+          command: ["sh", "-c"]
+          args:
+            - >
+              psql $DATABASE_URL -f /migrations/001_init.sql &&
+              go run /seed/seed.go
+          envFrom:
+            - configMapRef: { name: product-svc-env }
+          volumeMounts:
+            - name: migrations
+              mountPath: /migrations
+            - name: seed
+              mountPath: /seed
+      volumes:
+        - name: migrations
+          configMap:
+            name: product-svc-migrations
+        - name: seed
+          configMap:
+            name: product-svc-seed

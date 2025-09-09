@@ -1,0 +1,41 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: frontend
+# spec:
+#   replicas: 1
+#   selector: { matchLabels: { app: frontend } }
+#   template:
+#     metadata:
+#       labels: { app: frontend }
+#     spec:
+#       containers:
+#         - name: frontend
+#           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+#           ports:
+#             - containerPort: 3000
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: frontend } }
+  template:
+    metadata:
+      labels: { app: frontend }
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: { { .Values.image.pullPolicy } }
+          env:
+            - name: NEXT_PUBLIC_GRAPHQL_URL
+              value: { { .Values.env.GRAPHQL_URL | quote } }
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet: { path: /, port: 3000 }
+          livenessProbe:
+            httpGet: { path: /, port: 3000 }
