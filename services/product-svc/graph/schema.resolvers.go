@@ -6,7 +6,10 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
+
 	"rxw1/product-svc/graph/model"
 	"rxw1/product-svc/internal/logging"
 )
@@ -15,21 +18,109 @@ import (
 func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qty int32) (*model.Order, error) {
 	ctx2 := logging.With(ctx, "productID", productID)
 	logging.From(ctx2).Info("mutate create order")
-	panic(fmt.Errorf("not implemented: CreateOrder - createOrder"))
+
+	// TODO Validate input
+	// In real life, you'd want to check productID exists, stock levels, etc.
+
+	// Publish event to NATS
+	event := map[string]any{
+		"id":        fmt.Sprintf("evt-%d", time.Now().UnixNano()),
+		"productID": productID,
+		"qty":       qty,
+		"createdAt": time.Now().UTC().Format(time.RFC3339),
+	}
+	logging.From(ctx2).Info("publishing event", "event", event)
+
+	b, err := json.Marshal(event)
+	if err != nil {
+		logging.From(ctx2).Error("failed to marshal event", "error", err)
+		return nil, err
+	}
+
+	if err := r.NC.Publish("orders.created", b); err != nil {
+		logging.From(ctx2).Error("failed to publish event", "error", err)
+		return nil, err
+	}
+
+	// TODO
+	// Flush Redis cache for this product (to update stock levels, etc.)
+	// if r.FF.RedisEnabled(ctx) {
+	// 	_ = r.RC.Del(ctx, "product:"+productID)
+	// }
+
+	// TODO
+	// Return order (in real life, you'd want to store this in Postgres)
+	order := &model.Order{
+		ID:        event["id"].(string),
+		ProductID: productID,
+		Qty:       int32(qty),
+		CreatedAt: event["createdAt"].(string),
+	}
+
+	logging.From(ctx2).Info("order created", "order", order)
+	return order, nil
 }
 
 // Todos is the resolver for the todos field.
 func (r *queryResolver) ProductByID(ctx context.Context, productID string) (*model.Product, error) {
 	ctx2 := logging.With(ctx, "productID", productID)
 	logging.From(ctx2).Info("query product by id")
-	panic(fmt.Errorf("not implemented: ProductByID - productByID"))
+
+	// Check Redis cache
+	useCache := r.FF.RedisEnabled(ctx)
+	if useCache {
+		if s, err := r.RC.Get(ctx, "product:"+productID); err == nil {
+			var p model.Product
+			if json.Unmarshal([]byte(s), &p) == nil {
+				return &p, nil
+			}
+		}
+	}
+
+	// Fetch from Postgres
+	p, err := r.PG.GetProduct(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store in Redis cache
+	if useCache {
+		b, _ := json.Marshal(p)
+		_ = r.RC.Set(ctx, "product:"+productID, string(b), 5*time.Minute)
+	}
+
+	return p, nil
 }
 
 // Products is the resolver for the products field.
 func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) {
 	ctx2 := logging.With(ctx)
 	logging.From(ctx2).Info("query products")
-	panic(fmt.Errorf("not implemented: Products - products"))
+
+	// Check Redis cache
+	useCache := r.FF.RedisEnabled(ctx)
+	if useCache {
+		if s, err := r.RC.Get(ctx, "products:all"); err == nil {
+			var p []*model.Product
+			if json.Unmarshal([]byte(s), &p) == nil {
+				return p, nil
+			}
+		}
+	}
+
+	// Fetch from Postgres
+	rows, err := r.PG.GetProducts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store in Redis cache
+	if useCache {
+		b, _ := json.Marshal(rows)
+		_ = r.RC.Set(ctx, "products:all", string(b), 5*time.Minute)
+	}
+
+	return rows, nil
 }
 
 // Mutation returns MutationResolver implementation.
@@ -38,5 +129,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

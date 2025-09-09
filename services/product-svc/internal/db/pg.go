@@ -1,27 +1,113 @@
+// Q: Scanning in the DB layer vs resolver layer
+
+// A: Scan in the DB layer — it’s the simpler, safer, and more reusable approach.
+
+// Reasons:
+
+// - Separation of concerns: DB layer returns domain types (model.Product) and
+// the resolver just maps them to GraphQL.
+
+// - Resource management: DB layer can close rows and manage connections;
+// returning pgx.Rows pushes that responsibility to callers and can leak
+// connections.
+
+// - Type safety: convert DB types (int -> int32) once in DB code, keep resolver
+// code clean.
+
+// - Testability: easier to mock DB methods that return domain objects.
+
+// - gqlgen ergonomics: resolvers expect []*model.Product — returning that from
+// DB avoids extra conversion.
+
+// - When to scan in resolver:
+
+// You need lazy/field-level fetching, dataloader batching, or streaming very
+// large result sets (then consider cursor/pagination or a controlled iterator
+// pattern).
+
 package db
 
 import (
 	"context"
-	"fmt"
 
+	"rxw1/product-svc/graph/model"
+	"rxw1/product-svc/internal/logging"
+
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PG struct{ Pool *pgxpool.Pool }
+type PG struct {
+	Pool *pgxpool.Pool
+}
 
 func Connect(ctx context.Context, url string) (*PG, error) {
+	ctx2 := logging.With(ctx)
+	logging.From(ctx2).Info("pg connect", "url", url)
+
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
+		logging.From(ctx2).Error("pg connect", "err", err)
 		return nil, err
 	}
-	fmt.Println("postgres connected")
+
+	logging.From(ctx2).Info("pg connect", "status", "success")
 	return &PG{Pool: pool}, nil
 }
 
-func (p *PG) GetProduct(ctx context.Context, id string) (string, string, int, error) {
+func (p *PG) GetProduct(ctx context.Context, id string) (*model.Product, error) {
+	ctx2 := logging.With(ctx)
+	logging.From(ctx2).Info("pg get product", "id", id)
+
 	row := p.Pool.QueryRow(ctx, `select id, name, price from products where id=$1`, id)
+
 	var pid, name string
 	var price int
-	fmt.Printf("db get product: %s, %s, %d\n", pid, name, price)
-	return pid, name, price, row.Scan(&pid, &name, &price)
+	if err := row.Scan(&pid, &name, &price); err != nil {
+		if err == pgx.ErrNoRows {
+			logging.From(ctx2).Warn("pg get product", "id", id, "status", "no rows")
+			return nil, nil // return nil if not found
+		}
+
+		logging.From(ctx2).Error("pg get product", "id", id, "err", err)
+		return nil, err
+	}
+
+	logging.From(ctx2).Info("pg get product", "id", pid, "name", name, "price", price)
+	return &model.Product{
+		ID:    pid,
+		Name:  name,
+		Price: int32(price),
+	}, nil
+}
+
+func (p *PG) GetProducts(ctx context.Context) ([]*model.Product, error) {
+	ctx2 := logging.With(ctx)
+	logging.From(ctx2).Info("pg get products")
+
+	rows, err := p.Pool.Query(ctx, `select id, name, price from products`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	products := make([]*model.Product, 0, 16) // preallocate
+
+	for rows.Next() {
+		product := &model.Product{}
+		var price int
+		if err := rows.Scan(&product.ID, &product.Name, &price); err != nil {
+			logging.From(ctx2).Error("pg get products", "err", err)
+			return nil, err
+		}
+		product.Price = int32(price)
+		products = append(products, product)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	logging.From(ctx2).Info("pg get products", "count", len(products))
+	return products, nil
 }
