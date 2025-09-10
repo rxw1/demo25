@@ -27,7 +27,7 @@ services:
     image: ghcr.io/open-feature/flagd:latest
     command: ["start", "--uri", "file:/etc/flagd/flags.json"]
     volumes:
-      - ../infra/helm/flagd/templates/flags.json:/etc/flagd/flags.json:ro
+      - ./flagd/flags.json:/etc/flagd/flags.json:ro
     ports: ["8013:8013"]
 
   product-svc:

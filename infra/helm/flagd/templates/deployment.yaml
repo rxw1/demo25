@@ -4,14 +4,21 @@ metadata:
   name: flagd
 spec:
   replicas: 1
-  selector: { matchLabels: { app: flagd } }
+  selector:
+    matchLabels:
+      app: flagd
   template:
     metadata:
-      labels: { app: flagd }
+      labels:
+        app: flagd
     spec:
       containers:
         - name: flagd
-          image: {{ .Values.image }}
-          args: ["start", "--uri", "kubernetes://flagd-config/flags.json"]
-          ports: [{ containerPort: 8013 }]
+          image: "{{ .Values.image }}"
+          args:
+            - "start"
+            - "--uri"
+            - "kubernetes://flagd-config/flags.json"
+          ports:
+            - containerPort: 8013
 

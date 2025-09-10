@@ -1,11 +1,3 @@
-# image:
-#   repository: frontend
-#   tag: latest
-#   pullPolicy: IfNotPresent
-# service:
-#   port: 80
-#   targetPort: 3000
-
 image:
   repository: frontend
   tag: latest

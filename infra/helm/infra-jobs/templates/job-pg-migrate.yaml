@@ -6,6 +6,9 @@ metadata:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
+  # fail the Job if it runs longer than 5 minutes and limit retries
+  activeDeadlineSeconds: 300
+  backoffLimit: 1
   template:
     spec:
       restartPolicy: OnFailure
@@ -15,7 +18,9 @@ spec:
           command: ["/bin/sh","-c"]
           args:
             - >-
-              PGPASSWORD=${PGPASSWORD} psql -h ${PGHOST} -U ${PGUSER} -d ${PGDATABASE} -f /sql/migrate.sql;
+              PGPASSWORD=${PGPASSWORD} \
+              PGCONNECT_TIMEOUT=${PGCONNECT_TIMEOUT:-10} \
+              psql -h ${PGHOST} -U ${PGUSER} -d ${PGDATABASE} -v ON_ERROR_STOP=1 -f /sql/migrate.sql;
           env:
             - name: PGHOST
               value: {{ .Values.postgres.host | quote }}
@@ -25,6 +30,8 @@ spec:
               value: {{ .Values.postgres.password | quote }}
             - name: PGDATABASE
               value: {{ .Values.postgres.db | quote }}
+            - name: PGCONNECT_TIMEOUT
+              value: "10"
           volumeMounts:
             - name: sql
               mountPath: /sql
@@ -32,4 +39,4 @@ spec:
         - name: sql
           configMap:
             name: pg-init-sql
-            items: [{ key: migrate.sql, path: migrate.sql }]
+            items: [{ key: migrate.sql, path: migrate.sql }] 
