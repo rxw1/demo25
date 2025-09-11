@@ -59,15 +59,20 @@ helm-setup:
 	helm repo add nats https://nats-io.github.io/k8s/helm/charts/
 	helm repo update
 
+.PHONY: helm-install-infra
+helm-install-infra: nats pg mongo redis flagd infra-jobs
+
+.PHONY: helm-install-app
+helm-install-app: product-svc-chart order-svc-chart frontend-chart
+
+
 .PHONY: helm
-helm: helm-setup nats pg mongo redis flagd infra-jobs products-svc order-svc frontend
+install: helm-setup helm-install-infra helm-install-app
 
 .PHONY: helm-uninstall
 helm-uninstall:
-	helm uninstall frontend || true
-	helm uninstall product-svc order-svc -n app || true
-	helm uninstall flagd -n app || true
-	helm uninstall nats pg mongo redis -n infra || true
+	helm uninstall product-svc order-svc frontend -n app || true
+	helm uninstall nats pg mongo redis flagd -n infra || true
 
 .PHONY: helm-lint
 helm-lint:
@@ -77,43 +82,41 @@ helm-lint:
 
 .PHONY: nats
 nats:
-	@helm upgrade --install nats nats/nats -n infra --create-namespace
+	-helm upgrade --install nats nats/nats -n infra --create-namespace
 
 .PHONY: pg
 pg:
-	@helm upgrade --install pg bitnami/postgresql -n infra --set auth.postgresPassword=$(POSTGRES_PASSWORD)
+	-helm upgrade --install pg bitnami/postgresql -n infra --set auth.postgresPassword=$(POSTGRES_PASSWORD) --create-namespace
 
 .PHONY: mongo
 mongo:
-	@helm upgrade --install mongo bitnami/mongodb -n infra
+	-helm upgrade --install mongo bitnami/mongodb -n infra --create-namespace
 
 .PHONY: redis
 redis:
-	@helm upgrade --install redis bitnami/redis -n infra --set architecture=standalone
-
-.PHONY: infra-jobs
-infra-jobs:
-	# FIXME
-	@helm --debug upgrade --install infra-jobs infra/helm/infra-jobs -n infra
-
-###
+	-helm upgrade --install redis bitnami/redis -n infra --set architecture=standalone --create-namespace
 
 .PHONY: flagd
 flagd:
-	# FIXME
-	@helm upgrade --install flagd infra/helm/flagd -n app --create-namespace
+	-helm upgrade --install flagd infra/helm/flagd -n infra --create-namespace
 
-.PHONY: product-svc
-product-svc:
-	@helm upgrade --install product-svc infra/helm/product-svc -n app
+.PHONY: infra-jobs
+infra-jobs:
+	-helm --debug upgrade --install infra-jobs infra/helm/infra-jobs -n infra --create-namespace
 
-.PHONY: order-svc
-order-svc:
-	@helm upgrade --install order-svc infra/helm/order-svc -n app
+###
 
-.PHONY: frontend
-frontend:
-	@helm upgrade --install frontend infra/helm/frontend -n app
+.PHONY: product-svc-chart
+product-svc-chart:
+	-helm upgrade --install product-svc infra/helm/product-svc -n app --create-namespace
+
+.PHONY: order-svc-chart
+order-svc-chart:
+	-helm upgrade --install order-svc infra/helm/order-svc -n app --create-namespace
+
+.PHONY: frontend-chart
+frontend-chart:
+	-helm upgrade --install frontend infra/helm/frontend -n app --create-namespace
 
 ###
 
@@ -139,4 +142,39 @@ clean: helm-uninstall k3d-down dev-down
 clean-gql:
 	rm services/product-svc/graph/model/models_gen.go
 	rm services/product-svc/graph/generated.go
+
+.PHONY: status
+status: helm_status pod_status docker_status
+
+.PHONY: helm_status
+helm_status:
+	@echo; helm list -A
+
+.PHONY: pod_status
+pod_status:
+	@echo; kubectl get pods -A
+
+.PHONY: docker_status
+docker_status:
+	@echo; docker ps --format '{{.Names}}\n\tContainer ID: {{.ID}}\n\tCommand: {{.Command}}\n\tImage: {{.Image}}\n\tCreatedAt: {{.CreatedAt}}\n\tStatus: {{.Status}}\n'
+
+# image
+.PHONY: docker-product-svc
+docker-product-svc:
+	docker build -t docker-product-svc:latest services/product-svc
+
+# image
+.PHONY: docker-order-svc
+docker-order-svc:
+	docker build -t docker-order-svc:latest services/order-svc
+
+# container
+.PHONY: product-svc-container
+product-svc-container: docker-product-svc
+	docker run -d --name product-svc docker-product-svc:latest
+
+# container
+.PHONY: order-svc-container
+order-svc-container: docker-order-svc
+	docker run -d --name order-svc docker-order-svc:latest
 
