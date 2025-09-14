@@ -1,0 +1,4 @@
+image: registry:2.7
+service:
+  port: 5000
+

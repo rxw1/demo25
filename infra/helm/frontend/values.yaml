@@ -1,5 +1,5 @@
 image:
-  repository: frontend
+  repository: registry.infra.svc.cluster.local/frontend
   tag: latest
   pullPolicy: IfNotPresent
 service:
@@ -7,4 +7,4 @@ service:
   targetPort: 3000
   type: ClusterIP
 env:
-  GRAPHQL_URL: http://product-svc.app.svc.cluster.local/graphql
+  GRAPHQL_URL: http://productsvc.app.svc.cluster.local/graphql

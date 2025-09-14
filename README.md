@@ -23,7 +23,7 @@
 
 **Frontend:** `cd frontend && npm install && npm run dev` (should open `http://localhost:3000`).
 
-**GraphQL Playground:** `http://localhost:8080` (product-svc)
+**GraphQL Playground:** `http://localhost:8080` (productsvc)
 
 **Migration + Seed:** `make migration seed`
 
@@ -54,13 +54,13 @@ helm upgrade -i infra-jobs infra/helm/infra-jobs -n infra
 
 ```sh
 helm upgrade -i flagd infra/helm/flagd -n app --create-namespace
-helm upgrade -i product-svc infra/helm/product-svc -n app
-helm upgrade -i order-svc infra/helm/order-svc -n app
+helm upgrade -i productsvc infra/helm/productsvc -n app
+helm upgrade -i ordersvc infra/helm/ordersvc -n app
 helm upgrade -i frontend infra/helm/frontend -n app
 ```
 - Status prüfen: `kubectl get pods -n app` und `kubectl get pods -n infra`
 
-- Port-Forward Frontend (falls containerisiert): `kubectl port-forward svc/product-svc 8080:80 -n app`
+- Port-Forward Frontend (falls containerisiert): `kubectl port-forward svc/productsvc 8080:80 -n app`
 
 ### 4) Frontend über Helm deployen
 
@@ -81,7 +81,7 @@ helm upgrade -i frontend infra/helm/frontend -n app
 Damit ist der PoC skeletonfähig mit Migration/Seed, Frontend Deployment und automatisiertem E2E-Test.
 
 ### Hinweise
-- **gqlgen-Code:** einmal `go generate ./...` im `product-svc` ausführen (oder im Docker-Build). Eine `tools.go` mit `//go:build tools` kann `gqlgen` pinnen.
+- **gqlgen-Code:** einmal `go generate ./...` im `productsvc` ausführen (oder im Docker-Build). Eine `tools.go` mit `//go:build tools` kann `gqlgen` pinnen.
 - **Sicherheit:** für den PoC sind Passwörter/URIs simpel gehalten. Bitte *nicht* in Produktion.
 - **Observability:** absichtlich weggelassen; kann mit OTEL/Prom + Grafana später ergänzt werden.
 

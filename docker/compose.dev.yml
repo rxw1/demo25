@@ -30,8 +30,8 @@ services:
       - ./flagd/flags.json:/etc/flagd/flags.json:ro
     ports: ["8013:8013"]
 
-  product-svc:
-    build: ../services/product-svc
+  productsvc:
+    build: ../services/productsvc
     restart: always
     environment:
       - DATABASE_URL=postgres://app:app@postgres:5432/app?sslmode=disable
@@ -43,8 +43,8 @@ services:
     depends_on: [postgres, redis, nats, flagd]
     ports: ["8080:8080"]
 
-  order-svc:
-    build: ../services/order-svc
+  ordersvc:
+    build: ../services/ordersvc
     restart: always
     environment:
       - MONGO_URI=mongodb://mongo:27017

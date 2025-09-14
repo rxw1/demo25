@@ -9,7 +9,10 @@ POSTGRES_DATABASE=app
 
 default: dev-up
 fresh: dev-prune dev-up
-
+up: dev-up
+down: dev-down
+prune: dev-prune
+all: k3d-down k3d-up helm-install
 
 
 # NOTE about calling gqlgen
@@ -35,7 +38,7 @@ gen: gql fe
 
 .PHONY: gql
 gql:
-	cd services/product-svc && go run github.com/99designs/gqlgen generate
+	cd services/productsvc && go run github.com/99designs/gqlgen generate
 
 .PHONY: fe
 fe:
@@ -84,7 +87,7 @@ helm-install-infra: \
 	helm-install-flagd
 
 .PHONY: helm-install-app
-helm-install-app: product-svc-chart order-svc-chart frontend-chart
+helm-install-app: productsvc-chart ordersvc-chart frontend-chart
 
 .PHONY: helm-install
 helm-install: helm-install-infra helm-install-app
@@ -94,7 +97,7 @@ install: helm-setup helm-install-infra helm-install-app
 
 .PHONY: helm-uninstall
 helm-uninstall:
-	helm uninstall product-svc order-svc frontend -n $(APP_NAMESPACE) || true
+	helm uninstall productsvc ordersvc frontend -n $(APP_NAMESPACE) || true
 	helm uninstall nats pg mongo redis flagd -n $(INFRA_NAMESPACE) || true
 
 .PHONY: helm-lint
@@ -129,13 +132,13 @@ helm-install-flagd:
 
 ###
 
-.PHONY: product-svc-chart
-product-svc-chart:
-	helm upgrade --install product-svc infra/helm/product-svc -n $(APP_NAMESPACE) --create-namespace
+.PHONY: productsvc-chart
+productsvc-chart:
+	helm upgrade --install productsvc infra/helm/productsvc -n $(APP_NAMESPACE) --create-namespace
 
-.PHONY: order-svc-chart
-order-svc-chart:
-	helm upgrade --install order-svc infra/helm/order-svc -n $(APP_NAMESPACE) --create-namespace
+.PHONY: ordersvc-chart
+ordersvc-chart:
+	helm upgrade --install ordersvc infra/helm/ordersvc -n $(APP_NAMESPACE) --create-namespace
 
 .PHONY: frontend-chart
 frontend-chart:
@@ -150,9 +153,9 @@ frontend-chart:
 
 .PHONY: migration-seed
 migration-seed:
-	kubectl apply -f infra/helm/product-svc/templates/configmap-migrations.yaml
-	kubectl apply -f infra/helm/product-svc/templates/configmap-seed.yaml
-	kubectl apply -f infra/helm/product-svc/templates/job-migrate.yaml
+	kubectl apply -f infra/helm/productsvc/templates/configmap-migrations.yaml
+	kubectl apply -f infra/helm/productsvc/templates/configmap-seed.yaml
+	kubectl apply -f infra/helm/productsvc/templates/job-migrate.yaml
 
 .PHONY: test-e2e
 test-e2e:
@@ -163,47 +166,42 @@ clean: helm-uninstall k3d-down dev-down
 	
 .PHONY: clean-gql
 clean-gql:
-	rm services/product-svc/graph/model/models_gen.go
-	rm services/product-svc/graph/generated.go
+	rm services/productsvc/graph/model/models_gen.go
+	rm services/productsvc/graph/generated.go
 
 .PHONY: status
-status: helm_status pod_status docker_status
+status: helm-status pod-status docker-status
 
-.PHONY: helm_status
-helm_status:
+.PHONY: helm-status
+helm-status:
 	@echo; helm list -A
 
-.PHONY: pod_status
-pod_status:
+.PHONY: pod-status
+pod-status:
 	@echo; kubectl get pods -A
 
-.PHONY: docker_status
-docker_status:
+.PHONY: docker-status1
+docker-status1:
 	@echo; docker ps --format '{{.Names}}\n\tContainer ID: {{.ID}}\n\tCommand: {{.Command}}\n\tImage: {{.Image}}\n\tCreatedAt: {{.CreatedAt}}\n\tStatus: {{.Status}}\n'
 
-# image
-.PHONY: docker-product-svc
-docker-product-svc:
-	docker build -t docker-product-svc:latest services/product-svc
+.PHONY: docker-productsvc-build
+docker-productsvc-build:
+	docker build -t docker-productsvc:latest services/productsvc
 
-# image
-.PHONY: docker-order-svc
-docker-order-svc:
-	docker build -t docker-order-svc:latest services/order-svc
+.PHONY: docker-ordersvc-build
+docker-ordersvc-build:
+	docker build -t docker-ordersvc:latest services/ordersvc
 
-# container
-.PHONY: product-svc-container
-product-svc-container: docker-product-svc
-	docker run -d --name product-svc docker-product-svc:latest
+.PHONY: docker-productsvc-run
+docker-productsvc-run:
+	docker run -d --name productsvc docker-productsvc:latest
 
-# container
-.PHONY: order-svc-container
-#docker-run-ordersvc
-order-svc-container: docker-order-svc
-	docker run -d --name order-svc docker-order-svc:latest
+.PHONY: docker-ordersvc-run
+docker-ordersvc-run:
+	docker run -d --name ordersvc docker-ordersvc:latest
 
-.PHONY: docker-nats
-docker-nats:
+.PHONY: docker-nats-run
+docker-nats-run:
 	docker run -d --name nats -p 4222:4222 -p 8222:8222 nats:2.10-alpine
 
 .PHONY: db-dump-products
