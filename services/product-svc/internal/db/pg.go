@@ -1,29 +1,6 @@
-// Q: Scanning in the DB layer vs resolver layer
-
-// A: Scan in the DB layer — it’s the simpler, safer, and more reusable approach.
-
-// Reasons:
-
-// - Separation of concerns: DB layer returns domain types (model.Product) and
-// the resolver just maps them to GraphQL.
-
-// - Resource management: DB layer can close rows and manage connections;
-// returning pgx.Rows pushes that responsibility to callers and can leak
-// connections.
-
-// - Type safety: convert DB types (int -> int32) once in DB code, keep resolver
-// code clean.
-
-// - Testability: easier to mock DB methods that return domain objects.
-
-// - gqlgen ergonomics: resolvers expect []*model.Product — returning that from
-// DB avoids extra conversion.
-
-// - When to scan in resolver:
-
-// You need lazy/field-level fetching, dataloader batching, or streaming very
-// large result sets (then consider cursor/pagination or a controlled iterator
-// pattern).
+/// PostgreSQL database access using pgx
+/// Migrations using golang-migrate with embedded migrations
+/// Migrations are run automatically if AUTO_MIGRATE env is "true"
 
 package db
 

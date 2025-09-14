@@ -18,7 +18,17 @@ spec:
           args:
             - "start"
             - "--uri"
-            - "kubernetes://flagd-config/flags.json"
+            - "file:/etc/flagd/flags.json"
           ports:
             - containerPort: 8013
-
+          volumeMounts:
+            - name: flags
+              mountPath: /etc/flagd
+              readOnly: true
+      volumes:
+        - name: flags
+          configMap:
+            name: flagd-config
+            items:
+              - key: "flags.json"
+                path: "flags.json"

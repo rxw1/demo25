@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +21,9 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
+
 func main() {
 	ctx := context.Background()
 
@@ -27,6 +31,13 @@ func main() {
 	pg, err := db.Connect(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	// Migrations
+	if os.Getenv("AUTO_MIGRATE") == "true" {
+		if err := db.Migrate(ctx, os.Getenv("DATABASE_URL"), migrationsFS); err != nil {
+			log.Fatal("migrate failed: ", err)
+		}
 	}
 
 	// NATS

@@ -1,7 +1,0 @@
-postgres:
-  host: pg-postgresql.infra.svc.cluster.local
-  user: app
-  password: app
-  db: app
-mongo:
-  uri: mongodb://mongo-mongodb.infra.svc.cluster.local:27017/app

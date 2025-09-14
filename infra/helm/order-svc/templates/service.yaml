@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: order-svc
 spec:
+  #replicas: 1
   selector: { app: order-svc }
   ports:
     - port: {{ .Values.service.port }}

@@ -1,4 +1,16 @@
 POSTGRES_PASSWORD=postgres
+MIGRATION_DIR=migrations
+INFRA_NAMESPACE=infra
+APP_NAMESPACE=app
+POSTGRES_USERNAME=app
+POSTGRES_PASSWORD=app
+POSTGRES_DATABASE=app
+
+
+default: dev-up
+fresh: dev-prune dev-up
+
+
 
 # NOTE about calling gqlgen
 #
@@ -41,6 +53,10 @@ dev-up:
 dev-down:
 	docker compose -f $(COMPOSE_FILE) down -v
 
+.PHONY: dev-prune
+dev-prune:
+	docker compose -f docker/compose.dev.yml rm -fsv
+
 ###
 
 .PHONY: k3d-up
@@ -60,19 +76,26 @@ helm-setup:
 	helm repo update
 
 .PHONY: helm-install-infra
-helm-install-infra: nats pg mongo redis flagd infra-jobs
+helm-install-infra: \
+	helm-install-nats \
+	helm-install-pg \
+	helm-install-mongo \
+	helm-install-redis \
+	helm-install-flagd
 
 .PHONY: helm-install-app
 helm-install-app: product-svc-chart order-svc-chart frontend-chart
 
+.PHONY: helm-install
+helm-install: helm-install-infra helm-install-app
 
 .PHONY: helm
 install: helm-setup helm-install-infra helm-install-app
 
 .PHONY: helm-uninstall
 helm-uninstall:
-	helm uninstall product-svc order-svc frontend -n app || true
-	helm uninstall nats pg mongo redis flagd -n infra || true
+	helm uninstall product-svc order-svc frontend -n $(APP_NAMESPACE) || true
+	helm uninstall nats pg mongo redis flagd -n $(INFRA_NAMESPACE) || true
 
 .PHONY: helm-lint
 helm-lint:
@@ -80,50 +103,50 @@ helm-lint:
 
 ###
 
-.PHONY: nats
-nats:
-	-helm upgrade --install nats nats/nats -n infra --create-namespace
+.PHONY: helm-install-nats
+helm-install-nats:
+	helm upgrade --install nats nats/nats -n $(INFRA_NAMESPACE) --create-namespace
 
-.PHONY: pg
-pg:
-	-helm upgrade --install pg bitnami/postgresql -n infra --set auth.postgresPassword=$(POSTGRES_PASSWORD) --create-namespace
+.PHONY: helm-install-pg
+helm-install-pg:
+	helm upgrade --install pg bitnami/postgresql -n $(INFRA_NAMESPACE) --set auth.postgresPassword=$(POSTGRES_PASSWORD) --create-namespace
 
-.PHONY: mongo
-mongo:
-	-helm upgrade --install mongo bitnami/mongodb -n infra --create-namespace
+.PHONY: helm-install-mongo
+helm-install-mongo:
+	helm upgrade --install mongo bitnami/mongodb -n $(INFRA_NAMESPACE) --create-namespace
 
-.PHONY: redis
-redis:
-	-helm upgrade --install redis bitnami/redis -n infra --set architecture=standalone --create-namespace
+.PHONY: helm-install-redis
+helm-install-redis:
+	helm upgrade --install redis bitnami/redis -n $(INFRA_NAMESPACE) --set architecture=standalone --create-namespace
 
-.PHONY: flagd
-flagd:
-	-helm upgrade --install flagd infra/helm/flagd -n infra --create-namespace
+.PHONY: helm-install-flagd
+helm-install-flagd:
+	helm upgrade --install flagd infra/helm/flagd -n $(INFRA_NAMESPACE) --create-namespace
 
-.PHONY: infra-jobs
-infra-jobs:
-	-helm --debug upgrade --install infra-jobs infra/helm/infra-jobs -n infra --create-namespace
+#.PHONY: helm-install-infra-jobs
+#helm-install-infra-jobs:
+#	helm --debug upgrade --install infra-jobs infra/helm/infra-jobs -n infra --create-namespace
 
 ###
 
 .PHONY: product-svc-chart
 product-svc-chart:
-	-helm upgrade --install product-svc infra/helm/product-svc -n app --create-namespace
+	helm upgrade --install product-svc infra/helm/product-svc -n $(APP_NAMESPACE) --create-namespace
 
 .PHONY: order-svc-chart
 order-svc-chart:
-	-helm upgrade --install order-svc infra/helm/order-svc -n app --create-namespace
+	helm upgrade --install order-svc infra/helm/order-svc -n $(APP_NAMESPACE) --create-namespace
 
 .PHONY: frontend-chart
 frontend-chart:
-	-helm upgrade --install frontend infra/helm/frontend -n app --create-namespace
+	helm upgrade --install frontend infra/helm/frontend -n $(APP_NAMESPACE) --create-namespace
 
 ###
 
-.PHONY: seed
-seed:
-	docker exec -it $(docker ps -qf name=postgres) psql -U app -d app -c "create table if not exists products(id text primary key, name text, price int);"
-	docker exec -it $(docker ps -qf name=postgres) psql -U app -d app -c "insert into products(id,name,price) values('p1','Widget',199) on conflict do nothing;"
+#.PHONY: seed
+#seed:
+#	docker exec -it $(docker ps -qf name=postgres) psql -U app -d app -c "create table if not exists products(id text primary key, name text, price int);"
+#	docker exec -it $(docker ps -qf name=postgres) psql -U app -d app -c "insert into products(id,name,price) values('p1','Widget',199) on conflict do nothing;"
 
 .PHONY: migration-seed
 migration-seed:
@@ -175,6 +198,14 @@ product-svc-container: docker-product-svc
 
 # container
 .PHONY: order-svc-container
+#docker-run-ordersvc
 order-svc-container: docker-order-svc
 	docker run -d --name order-svc docker-order-svc:latest
 
+.PHONY: docker-nats
+docker-nats:
+	docker run -d --name nats -p 4222:4222 -p 8222:8222 nats:2.10-alpine
+
+.PHONY: db-dump-products
+db-dump-products:
+	docker exec -it $(docker ps -qf name=postgres) psql -U $(POSTGRES_USERNAME) -d $(POSTGRES_DATABASE) -c "SELECT * FROM products;"

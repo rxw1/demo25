@@ -9,9 +9,9 @@
     "codegen": "graphql-codegen --config ./graphql/codegen.ts"
   },
   "dependencies": {
-    "@apollo/client": "^4.0.4",
+    "@apollo/client": "^4.0.5",
     "graphql": "^16.11.0",
-    "next": "15.5.2",
+    "next": "15.5.3",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "rxjs": "^7.8.2"

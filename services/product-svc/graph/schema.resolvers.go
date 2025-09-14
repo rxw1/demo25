@@ -8,9 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"rxw1/product-svc/graph/model"
 	"rxw1/product-svc/internal/logging"
-	"time"
 )
 
 // CreateTodo is the resolver for the createTodo field.
@@ -119,6 +120,7 @@ func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) 
 		_ = r.RC.Set(ctx, "products:all", string(b), 5*time.Minute)
 	}
 
+	logging.From(ctx2).Info("fetched products", "count", len(rows))
 	return rows, nil
 }
 
@@ -128,5 +130,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

@@ -9,6 +9,10 @@ env:
   NATS_URL: nats://nats.infra.svc.cluster.local:4222
   FLAGD_HOST: flagd.app.svc.cluster.local
   FLAGD_PORT: "8013"
+  # Controls whether the product-svc binary will run embedded DB migrations on startup.
+  # Set to "true" in environments where you want automated migrations (e.g., CI or single-instance dev).
+  # Keep "false" for production clusters where migrations run as a separate controlled step.
+  AUTO_MIGRATE: "false"
 service:
   port: 80
   targetPort: 8080

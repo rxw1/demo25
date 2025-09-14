@@ -32,17 +32,20 @@ services:
 
   product-svc:
     build: ../services/product-svc
+    restart: always
     environment:
       - DATABASE_URL=postgres://app:app@postgres:5432/app?sslmode=disable
       - REDIS_ADDR=redis:6379
       - NATS_URL=nats://nats:4222
       - FLAGD_HOST=flagd
       - FLAGD_PORT=8013
+      - AUTO_MIGRATE=true
     depends_on: [postgres, redis, nats, flagd]
     ports: ["8080:8080"]
 
   order-svc:
     build: ../services/order-svc
+    restart: always
     environment:
       - MONGO_URI=mongodb://mongo:27017
       - NATS_URL=nats://nats:4222

@@ -1,7 +1,0 @@
-create table if not exists products (
-    id text primary key,
-    name text not null,
-    price int not null
-);
-
-create unique index if not exists idx_products_name on products (name);

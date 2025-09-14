@@ -1,4 +1,4 @@
-package seed
+package db
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func main() {
+func Seed() {
 	url := os.Getenv("DATABASE_URL")
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, url)

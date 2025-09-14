@@ -5,11 +5,18 @@ go 1.25.0
 require (
 	github.com/99designs/gqlgen v0.17.78
 	github.com/go-chi/chi/v5 v5.2.3
+	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/jackc/pgx/v5 v5.7.6
+	github.com/lib/pq v1.10.9
 	github.com/nats-io/nats.go v1.45.0
 	github.com/open-feature/go-sdk v1.15.1
-	github.com/redis/go-redis/v9 v9.13.0
+	github.com/redis/go-redis/v9 v9.14.0
 	github.com/vektah/gqlparser/v2 v2.5.30
+)
+
+require (
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 )
 
 require (
@@ -41,6 +48,6 @@ require (
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
+	golang.org/x/tools v0.37.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

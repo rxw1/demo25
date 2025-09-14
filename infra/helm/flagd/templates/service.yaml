@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: flagd
 spec:
+  #replicas: 1
   selector:
     app: flagd
   ports:

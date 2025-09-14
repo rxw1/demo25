@@ -1,6 +1,0 @@
-apiVersion: v2
-name: infra-jobs
-version: 0.1.0
-icon: https://raw.githubusercontent.com/jfpoc/brand/main/logo/png/infra-logo-64x64.png
-description: A Helm chart for infrastructure jobs
-appVersion: "latest"
