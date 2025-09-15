@@ -1,5 +1,5 @@
 image:
-  repository: registry.infra.svc.cluster.local/frontend
+  repository: docker-frontend
   tag: latest
   pullPolicy: IfNotPresent
 service:

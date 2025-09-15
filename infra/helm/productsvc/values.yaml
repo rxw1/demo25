@@ -1,6 +1,5 @@
 image:
-  repository: registry.infra.svc.cluster.local/frontend
-  #repository: localhost:5000/docker-productsvc
+  repository: docker-productsvc
   tag: latest
   pullPolicy: IfNotPresent
 

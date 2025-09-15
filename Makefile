@@ -1,3 +1,5 @@
+SHELL=/bin/zsh
+
 POSTGRES_PASSWORD=postgres
 MIGRATION_DIR=migrations
 INFRA_NAMESPACE=infra
@@ -87,7 +89,7 @@ helm-install-infra: \
 	helm-install-flagd
 
 .PHONY: helm-install-app
-helm-install-app: productsvc-chart ordersvc-chart frontend-chart
+helm-install-app: productsvc ordersvc frontend
 
 .PHONY: helm-install
 helm-install: helm-install-infra helm-install-app
@@ -184,13 +186,35 @@ pod-status:
 docker-status1:
 	@echo; docker ps --format '{{.Names}}\n\tContainer ID: {{.ID}}\n\tCommand: {{.Command}}\n\tImage: {{.Image}}\n\tCreatedAt: {{.CreatedAt}}\n\tStatus: {{.Status}}\n'
 
-.PHONY: docker-productsvc-build
-docker-productsvc-build:
-	docker build -t docker-productsvc:latest services/productsvc
 
-.PHONY: docker-ordersvc-build
-docker-ordersvc-build:
-	docker build -t docker-ordersvc:latest services/ordersvc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.PHONY: db-dump-products
+db-dump-products:
+	docker exec -it $(docker ps -qf name=postgres) psql -U $(POSTGRES_USERNAME) -d $(POSTGRES_DATABASE) -c "SELECT * FROM products;"
+
+
+
+
+
+
+
 
 .PHONY: docker-productsvc-run
 docker-productsvc-run:
@@ -204,6 +228,141 @@ docker-ordersvc-run:
 docker-nats-run:
 	docker run -d --name nats -p 4222:4222 -p 8222:8222 nats:2.10-alpine
 
-.PHONY: db-dump-products
-db-dump-products:
-	docker exec -it $(docker ps -qf name=postgres) psql -U $(POSTGRES_USERNAME) -d $(POSTGRES_DATABASE) -c "SELECT * FROM products;"
+
+
+
+
+
+
+#
+# Build the docker image, copy it to k3d and run helm with explicitly
+# overriding tag and repository in values.yaml.
+#
+
+.PHONY: productsvc-build
+productsvc-build:
+	docker build -t docker-productsvc:latest services/productsvc
+
+.PHONY: productsvc-import
+productsvc-import:
+	k3d image import docker-productsvc:latest --cluster poc
+
+.PHONY: productsvc-install
+productsvc-install:
+	helm upgrade --install productsvc infra/helm/productsvc -n $(APP_NAMESPACE) --create-namespace
+
+.PHONY: productsvc-upgrade
+productsvc-upgrade:
+	helm upgrade productsvc infra/helm/productsvc -n $(APP_NAMESPACE) --reuse-values \
+		--set image.tag=latest --set image.repository=docker-productsvc
+
+.PHONY: productsvc-deploy
+productsvc-deploy:
+	kubectl rollout restart deployment/productsvc -n $(APP_NAMESPACE)
+
+.PHONY: productsvc-show
+productsvc-show:
+	helm list -n $(APP_NAMESPACE)
+
+.PHONY: productsvc
+productsvc: productsvc-build productsvc-import
+	helm get metadata -n app productsvc && \
+		$(MAKE) productsvc-upgrade || \
+		$(MAKE) productsvc-install
+
+###
+
+.PHONY: ordersvc-build
+ordersvc-build:
+	docker build -t docker-ordersvc:latest services/ordersvc
+
+.PHONY: ordersvc-import
+ordersvc-import:
+	k3d image import docker-ordersvc:latest --cluster poc
+
+.PHONY: ordersvc-install
+ordersvc-install:
+	helm upgrade --install ordersvc infra/helm/ordersvc -n $(APP_NAMESPACE) --create-namespace
+
+.PHONY: ordersvc-upgrade
+ordersvc-upgrade:
+	helm upgrade ordersvc infra/helm/ordersvc -n $(APP_NAMESPACE) --reuse-values \
+		--set image.tag=latest --set image.repository=docker-ordersvc
+
+.PHONY: ordersvc-show
+ordersvc-show:
+	helm list -n $(APP_NAMESPACE)
+
+.PHONY: ordersvc
+ordersvc: ordersvc-build ordersvc-import
+	helm get metadata -n app ordersvc && \
+		$(MAKE) ordersvc-upgrade || \
+		$(MAKE) ordersvc-install
+
+###
+
+.PHONY: frontend-build
+frontend-build:
+	docker build -t docker-frontend:latest frontend
+
+.PHONY: frontend-import
+frontend-import:
+	k3d image import docker-frontend:latest --cluster poc
+
+.PHONY: frontend-install
+frontend-install:
+	helm upgrade --install frontend infra/helm/frontend -n $(APP_NAMESPACE) --create-namespace
+
+.PHONY: frontend-upgrade
+frontend-upgrade:
+	helm upgrade frontend infra/helm/frontend -n $(APP_NAMESPACE) --reuse-values \
+		--set image.tag=latest --set image.repository=docker-frontend
+
+.PHONY: frontend-show
+frontend-show:
+	helm list -n $(APP_NAMESPACE)
+
+
+.PHONY: frontend
+frontend: frontend-build frontend-import
+	helm get metadata -n app frontend && \
+		$(MAKE) frontend-upgrade || \
+		$(MAKE) frontend-install
+
+#.PHONY: ordersvc
+#ordersvc:
+#	docker build -t docker-ordersvc:latest ./services/ordersvc
+#	k3d image import docker-ordersvc:latest --cluster poc
+#	helm upgrade ordersvc infra/helm/ordersvc -n $(APP_NAMESPACE) --reuse-values \
+#		--set image.tag=latest --set image.repository=docker-ordersvc
+#
+#.PHONY: frontend
+#frontend:
+#	docker build -t docker-frontend:latest ./frontend
+#	k3d image import docker-frontend:latest --cluster poc
+#	helm upgrade frontend infra/helm/frontend -n $(APP_NAMESPACE) --reuse-values \
+#		--set image.tag=latest --set image.repository=docker-frontend
+
+
+.PHONY: nats
+nats:
+	helm upgrade --install nats nats/nats -n $(INFRA_NAMESPACE) --create-namespace
+
+.PHONY: postgresql
+postgresql:
+	helm upgrade --install pg bitnami/postgresql -n $(INFRA_NAMESPACE) \
+		--set auth.postgresPassword=$(POSTGRES_PASSWORD) --create-namespace
+
+.PHONY: mongo
+mongo:
+	helm upgrade --install mongo bitnami/mongodb -n $(INFRA_NAMESPACE) --create-namespace
+
+.PHONY: redis
+redis:
+	helm upgrade --install redis bitnami/redis -n $(INFRA_NAMESPACE) \
+		--set architecture=standalone --create-namespace
+
+.PHONY: flagd
+flagd:
+	helm upgrade --install flagd infra/helm/flagd -n $(INFRA_NAMESPACE) --create-namespace
+
