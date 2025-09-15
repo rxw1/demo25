@@ -1,0 +1,72 @@
+Release "frontend" has been upgraded. Happy Helming!
+NAME: frontend
+LAST DEPLOYED: Mon Sep 15 17:19:12 2025
+NAMESPACE: app
+STATUS: deployed
+REVISION: 3
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+env:
+  GRAPHQL_URL: http://productsvc.app.svc.cluster.local/graphql
+image:
+  pullPolicy: IfNotPresent
+  repository: registry.infra.svc.cluster.local/frontend
+  tag: latest
+service:
+  port: 80
+  targetPort: 3000
+  type: ClusterIP
+
+HOOKS:
+MANIFEST:
+---
+# Source: frontend/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  #replicas: 1
+  selector:
+    app: frontend
+  type: "ClusterIP"
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+# Source: frontend/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: "registry.infra.svc.cluster.local/frontend:latest"
+          imagePullPolicy: "IfNotPresent"
+          env:
+            - name: NEXT_PUBLIC_GRAPHQL_URL
+              value: "http://productsvc.app.svc.cluster.local/graphql"
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: "/"
+              port: 3000
+          livenessProbe:
+            httpGet:
+              path: "/"
+              port: 3000
+

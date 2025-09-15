@@ -1,0 +1,80 @@
+Release "productsvc" has been upgraded. Happy Helming!
+NAME: productsvc
+LAST DEPLOYED: Mon Sep 15 16:47:32 2025
+NAMESPACE: app
+STATUS: deployed
+REVISION: 5
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+env:
+  AUTO_MIGRATE: "false"
+  DATABASE_URL: postgres://app:app@pg-postgresql.infra.svc.cluster.local:5432/app?sslmode=disable
+  FLAGD_HOST: flagd.app.svc.cluster.local
+  FLAGD_PORT: "8013"
+  NATS_URL: nats://nats.infra.svc.cluster.local:4222
+  REDIS_ADDR: redis-master.infra.svc.cluster.local:6379
+image:
+  pullPolicy: IfNotPresent
+  repository: registry.infra.svc.cluster.local/frontend
+  tag: latest
+service:
+  port: 80
+  targetPort: 8080
+
+HOOKS:
+MANIFEST:
+---
+# Source: productsvc/templates/configmap.env.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: productsvc-env
+  labels:
+    app: productsvc
+data:
+  AUTO_MIGRATE: "false"
+  DATABASE_URL: "postgres://app:app@pg-postgresql.infra.svc.cluster.local:5432/app?sslmode=disable"
+  FLAGD_HOST: "flagd.app.svc.cluster.local"
+  FLAGD_PORT: "8013"
+  NATS_URL: "nats://nats.infra.svc.cluster.local:4222"
+  REDIS_ADDR: "redis-master.infra.svc.cluster.local:6379"
+---
+# Source: productsvc/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: productsvc
+spec:
+  selector: { app: productsvc }
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+# Source: productsvc/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: productsvc
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: productsvc } }
+  template:
+    metadata:
+      labels: { app: productsvc }
+    spec:
+      containers:
+        - name: productsvc
+          image: "registry.infra.svc.cluster.local/frontend:latest"
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: productsvc-env }
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /, port: 8080 }
+          livenessProbe:
+            httpGet: { path: /, port: 8080 }
+

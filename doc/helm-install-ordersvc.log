@@ -1,0 +1,70 @@
+Release "ordersvc" has been upgraded. Happy Helming!
+NAME: ordersvc
+LAST DEPLOYED: Mon Sep 15 16:47:56 2025
+NAMESPACE: app
+STATUS: deployed
+REVISION: 3
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+env:
+  MONGO_URI: mongodb://mongo-mongodb.infra.svc.cluster.local:27017
+  NATS_URL: nats://nats.infra.svc.cluster.local:4222
+image:
+  pullPolicy: IfNotPresent
+  repository: localhost:5000/ordersvc
+  tag: latest
+service:
+  port: 80
+  targetPort: 8081
+
+HOOKS:
+MANIFEST:
+---
+# Source: ordersvc/templates/deployment.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: ordersvc-env }
+data:
+  MONGO_URI: "mongodb://mongo-mongodb.infra.svc.cluster.local:27017"
+  NATS_URL: "nats://nats.infra.svc.cluster.local:4222"
+---
+# Source: ordersvc/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordersvc
+spec:
+  #replicas: 1
+  selector: { app: ordersvc }
+  ports:
+    - port: 80
+      targetPort: 8081
+---
+# Source: ordersvc/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordersvc
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ordersvc } }
+  template:
+    metadata:
+      labels: { app: ordersvc }
+    spec:
+      containers:
+        - name: ordersvc
+          image: "localhost:5000/ordersvc:latest"
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: ordersvc-env }
+          ports:
+            - containerPort: 8081
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8081 }
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8081 }
+
