@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"os"
 
-	"rxw1/productsvc/graph"
 	"rxw1/productsvc/internal/cache"
 	"rxw1/productsvc/internal/db"
 	"rxw1/productsvc/internal/flags"
+	"rxw1/productsvc/internal/graphql"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -52,8 +52,8 @@ func main() {
 	ff := flags.New()
 
 	// GraphQL
-	res := &graph.Resolver{PG: pg, NC: nc, RC: rc, FF: ff}
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: res}))
+	res := &graphql.Resolver{PG: pg, NC: nc, RC: rc, FF: ff}
+	srv := handler.NewDefaultServer(graphql.NewExecutableSchema(graphql.Config{Resolvers: res}))
 
 	r := chi.NewRouter()
 

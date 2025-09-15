@@ -1,60 +1,12 @@
-SHELL=/bin/zsh
-
-POSTGRES_PASSWORD=postgres
-MIGRATION_DIR=migrations
-INFRA_NAMESPACE=infra
-APP_NAMESPACE=app
-POSTGRES_USERNAME=app
-POSTGRES_PASSWORD=app
-POSTGRES_DATABASE=app
-
-
-default: dev-up
-fresh: dev-prune dev-up
-up: dev-up
-down: dev-down
-prune: dev-prune
-all: k3d-down k3d-up helm-install
-
-
-# NOTE about calling gqlgen
-#
-# go run github.com/99designs/gqlgen generate
-#
-# - directly runs the gqlgen generator via the module path; always executes
-#   gqlgen and writes the generated files.
-# - no reliance on any source comment directives; works anywhere (assuming
-#   module available).
-#
-# go generate ./...
-#
-# - scans source files for //go:generate comments and runs the commands found
-#   there, package by package.
-# - it does NOT implicitly run gqlgen unless you have a go:generate directive
-#   that calls it (or an installed binary named in the directive).
-# - it will be a no-op if there are no go:generate directives pointing to
-#   gqlgen (or if the directives point to a binary that isn’t installed).
-
-.PHONY: gen
-gen: gql fe
-
-.PHONY: gql
-gql:
-	cd services/productsvc && go run github.com/99designs/gqlgen generate
-
-.PHONY: fe
-fe:
-	cd frontend && npm run codegen || true
-
-###
-
-COMPOSE_FILE=docker/compose.dev.yml
+COMPOSE_FILE=infra/compose.dev.yml
 
 .PHONY: dev-up
+up: dev-up
 dev-up:
 	COMPOSE_BAKE=true docker compose -f $(COMPOSE_FILE) up -d --build
 
 .PHONY: dev-down
+down: dev-down
 dev-down:
 	docker compose -f $(COMPOSE_FILE) down -v
 
@@ -62,307 +14,64 @@ dev-down:
 dev-prune:
 	docker compose -f docker/compose.dev.yml rm -fsv
 
-###
+#############################################################################
+
+CLUSTER_NAME=poc
 
 .PHONY: k3d-up
 k3d-up:
-	k3d cluster create poc -c infra/k3d/cluster.yaml
+start: k3d-up
+	k3d cluster create $(CLUSTER_NAME) -c infra/cluster.yaml
 
 .PHONY: k3d-down
 k3d-down:
-	k3d cluster delete poc
+stop: k3d-down
+	k3d cluster delete $(CLUSTER_NAME)
 
-###
+.PHONY: k3d-prune
+k3d-prune:
+	# TODO
 
-.PHONY: helm-setup
-helm-setup:
-	helm repo add bitnami https://charts.bitnami.com/bitnami
-	helm repo add nats https://nats-io.github.io/k8s/helm/charts/
-	helm repo update
+#############################################################################
 
-.PHONY: helm-install-infra
-helm-install-infra: \
-	helm-install-nats \
-	helm-install-pg \
-	helm-install-mongo \
-	helm-install-redis \
-	helm-install-flagd
+.PHONY: install
+install:
+	$(MAKE) -C infra install
+	$(MAKE) -C services/productsvc build import install
+	$(MAKE) -C services/ordersvc build import install
+	$(MAKE) -C services/frontend build import install
 
-.PHONY: helm-install-app
-helm-install-app: productsvc ordersvc frontend
+.PHONY: upgrade
+upgrade:
+	$(MAKE) -C infra upgrade
+	$(MAKE) -C services/productsvc build import upgrade
+	$(MAKE) -C services/ordersvc build import upgrade
+	$(MAKE) -C services/frontend build import upgrade
 
-.PHONY: helm-install
-helm-install: helm-install-infra helm-install-app
+.PHONY: uninstall
+uninstall:
+	$(MAKE) -C services/frontend uninstall
+	$(MAKE) -C services/ordersvc uninstall
+	$(MAKE) -C services/productsvc uninstall
+	$(MAKE) -C infra uninstall
 
-.PHONY: helm
-install: helm-setup helm-install-infra helm-install-app
+#############################################################################
 
-.PHONY: helm-uninstall
-helm-uninstall:
-	helm uninstall productsvc ordersvc frontend -n $(APP_NAMESPACE) || true
-	helm uninstall nats pg mongo redis flagd -n $(INFRA_NAMESPACE) || true
+.PHONY: graphql
+graphql:
+	$(MAKE) -C services/productsvc gqlgen
+	$(MAKE) -C services/frontend codegen
 
-.PHONY: helm-lint
-helm-lint:
-	for i in infra/helm/*; do helm lint $$i; done
+.PHONY: lint
+lint:
+	$(MAKE) -C infra lint
+	$(MAKE) -C services/productsvc lint
+	$(MAKE) -C services/ordersvc lint
+	$(MAKE) -C services/frontend lint
 
-###
+#############################################################################
 
-.PHONY: helm-install-nats
-helm-install-nats:
-	helm upgrade --install nats nats/nats -n $(INFRA_NAMESPACE) --create-namespace
-
-.PHONY: helm-install-pg
-helm-install-pg:
-	helm upgrade --install pg bitnami/postgresql -n $(INFRA_NAMESPACE) --set auth.postgresPassword=$(POSTGRES_PASSWORD) --create-namespace
-
-.PHONY: helm-install-mongo
-helm-install-mongo:
-	helm upgrade --install mongo bitnami/mongodb -n $(INFRA_NAMESPACE) --create-namespace
-
-.PHONY: helm-install-redis
-helm-install-redis:
-	helm upgrade --install redis bitnami/redis -n $(INFRA_NAMESPACE) --set architecture=standalone --create-namespace
-
-.PHONY: helm-install-flagd
-helm-install-flagd:
-	helm upgrade --install flagd infra/helm/flagd -n $(INFRA_NAMESPACE) --create-namespace
-
-#.PHONY: helm-install-infra-jobs
-#helm-install-infra-jobs:
-#	helm --debug upgrade --install infra-jobs infra/helm/infra-jobs -n infra --create-namespace
-
-###
-
-.PHONY: productsvc-chart
-productsvc-chart:
-	helm upgrade --install productsvc infra/helm/productsvc -n $(APP_NAMESPACE) --create-namespace
-
-.PHONY: ordersvc-chart
-ordersvc-chart:
-	helm upgrade --install ordersvc infra/helm/ordersvc -n $(APP_NAMESPACE) --create-namespace
-
-.PHONY: frontend-chart
-frontend-chart:
-	helm upgrade --install frontend infra/helm/frontend -n $(APP_NAMESPACE) --create-namespace
-
-###
-
-#.PHONY: seed
-#seed:
-#	docker exec -it $(docker ps -qf name=postgres) psql -U app -d app -c "create table if not exists products(id text primary key, name text, price int);"
-#	docker exec -it $(docker ps -qf name=postgres) psql -U app -d app -c "insert into products(id,name,price) values('p1','Widget',199) on conflict do nothing;"
-
-.PHONY: migration-seed
-migration-seed:
-	kubectl apply -f infra/helm/productsvc/templates/configmap-migrations.yaml
-	kubectl apply -f infra/helm/productsvc/templates/configmap-seed.yaml
-	kubectl apply -f infra/helm/productsvc/templates/job-migrate.yaml
-
-.PHONY: test-e2e
-test-e2e:
+.PHONY: tests
+tests:
 	cd tests/e2e && go test -v
-
-.PHONY: clean
-clean: helm-uninstall k3d-down dev-down
-	
-.PHONY: clean-gql
-clean-gql:
-	rm services/productsvc/graph/model/models_gen.go
-	rm services/productsvc/graph/generated.go
-
-.PHONY: status
-status: helm-status pod-status docker-status
-
-.PHONY: helm-status
-helm-status:
-	@echo; helm list -A
-
-.PHONY: pod-status
-pod-status:
-	@echo; kubectl get pods -A
-
-.PHONY: docker-status1
-docker-status1:
-	@echo; docker ps --format '{{.Names}}\n\tContainer ID: {{.ID}}\n\tCommand: {{.Command}}\n\tImage: {{.Image}}\n\tCreatedAt: {{.CreatedAt}}\n\tStatus: {{.Status}}\n'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.PHONY: db-dump-products
-db-dump-products:
-	docker exec -it $(docker ps -qf name=postgres) psql -U $(POSTGRES_USERNAME) -d $(POSTGRES_DATABASE) -c "SELECT * FROM products;"
-
-
-
-
-
-
-
-
-.PHONY: docker-productsvc-run
-docker-productsvc-run:
-	docker run -d --name productsvc docker-productsvc:latest
-
-.PHONY: docker-ordersvc-run
-docker-ordersvc-run:
-	docker run -d --name ordersvc docker-ordersvc:latest
-
-.PHONY: docker-nats-run
-docker-nats-run:
-	docker run -d --name nats -p 4222:4222 -p 8222:8222 nats:2.10-alpine
-
-
-
-
-
-
-
-#
-# Build the docker image, copy it to k3d and run helm with explicitly
-# overriding tag and repository in values.yaml.
-#
-
-.PHONY: productsvc-build
-productsvc-build:
-	docker build -t docker-productsvc:latest services/productsvc
-
-.PHONY: productsvc-import
-productsvc-import:
-	k3d image import docker-productsvc:latest --cluster poc
-
-.PHONY: productsvc-install
-productsvc-install:
-	helm upgrade --install productsvc infra/helm/productsvc -n $(APP_NAMESPACE) --create-namespace
-
-.PHONY: productsvc-upgrade
-productsvc-upgrade:
-	helm upgrade productsvc infra/helm/productsvc -n $(APP_NAMESPACE) --reuse-values \
-		--set image.tag=latest --set image.repository=docker-productsvc
-
-.PHONY: productsvc-deploy
-productsvc-deploy:
-	kubectl rollout restart deployment/productsvc -n $(APP_NAMESPACE)
-
-.PHONY: productsvc-show
-productsvc-show:
-	helm list -n $(APP_NAMESPACE)
-
-.PHONY: productsvc
-productsvc: productsvc-build productsvc-import
-	helm get metadata -n app productsvc && \
-		$(MAKE) productsvc-upgrade || \
-		$(MAKE) productsvc-install
-
-###
-
-.PHONY: ordersvc-build
-ordersvc-build:
-	docker build -t docker-ordersvc:latest services/ordersvc
-
-.PHONY: ordersvc-import
-ordersvc-import:
-	k3d image import docker-ordersvc:latest --cluster poc
-
-.PHONY: ordersvc-install
-ordersvc-install:
-	helm upgrade --install ordersvc infra/helm/ordersvc -n $(APP_NAMESPACE) --create-namespace
-
-.PHONY: ordersvc-upgrade
-ordersvc-upgrade:
-	helm upgrade ordersvc infra/helm/ordersvc -n $(APP_NAMESPACE) --reuse-values \
-		--set image.tag=latest --set image.repository=docker-ordersvc
-
-.PHONY: ordersvc-show
-ordersvc-show:
-	helm list -n $(APP_NAMESPACE)
-
-.PHONY: ordersvc
-ordersvc: ordersvc-build ordersvc-import
-	helm get metadata -n app ordersvc && \
-		$(MAKE) ordersvc-upgrade || \
-		$(MAKE) ordersvc-install
-
-###
-
-.PHONY: frontend-build
-frontend-build:
-	docker build -t docker-frontend:latest frontend
-
-.PHONY: frontend-import
-frontend-import:
-	k3d image import docker-frontend:latest --cluster poc
-
-.PHONY: frontend-install
-frontend-install:
-	helm upgrade --install frontend infra/helm/frontend -n $(APP_NAMESPACE) --create-namespace
-
-.PHONY: frontend-upgrade
-frontend-upgrade:
-	helm upgrade frontend infra/helm/frontend -n $(APP_NAMESPACE) --reuse-values \
-		--set image.tag=latest --set image.repository=docker-frontend
-
-.PHONY: frontend-show
-frontend-show:
-	helm list -n $(APP_NAMESPACE)
-
-
-.PHONY: frontend
-frontend: frontend-build frontend-import
-	helm get metadata -n app frontend && \
-		$(MAKE) frontend-upgrade || \
-		$(MAKE) frontend-install
-
-#.PHONY: ordersvc
-#ordersvc:
-#	docker build -t docker-ordersvc:latest ./services/ordersvc
-#	k3d image import docker-ordersvc:latest --cluster poc
-#	helm upgrade ordersvc infra/helm/ordersvc -n $(APP_NAMESPACE) --reuse-values \
-#		--set image.tag=latest --set image.repository=docker-ordersvc
-#
-#.PHONY: frontend
-#frontend:
-#	docker build -t docker-frontend:latest ./frontend
-#	k3d image import docker-frontend:latest --cluster poc
-#	helm upgrade frontend infra/helm/frontend -n $(APP_NAMESPACE) --reuse-values \
-#		--set image.tag=latest --set image.repository=docker-frontend
-
-
-.PHONY: nats
-nats:
-	helm upgrade --install nats nats/nats -n $(INFRA_NAMESPACE) --create-namespace
-
-.PHONY: postgresql
-postgresql:
-	helm upgrade --install pg bitnami/postgresql -n $(INFRA_NAMESPACE) \
-		--set auth.postgresPassword=$(POSTGRES_PASSWORD) --create-namespace
-
-.PHONY: mongo
-mongo:
-	helm upgrade --install mongo bitnami/mongodb -n $(INFRA_NAMESPACE) --create-namespace
-
-.PHONY: redis
-redis:
-	helm upgrade --install redis bitnami/redis -n $(INFRA_NAMESPACE) \
-		--set architecture=standalone --create-namespace
-
-.PHONY: flagd
-flagd:
-	helm upgrade --install flagd infra/helm/flagd -n $(INFRA_NAMESPACE) --create-namespace
 

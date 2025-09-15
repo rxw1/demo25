@@ -1,0 +1,10 @@
+image:
+  repository: ordersvc
+  tag: latest
+  pullPolicy: IfNotPresent
+env:
+  MONGO_URI: mongodb://mongo-mongodb.infra.svc.cluster.local:27017
+  NATS_URL: nats://nats.infra.svc.cluster.local:4222
+service:
+  port: 80
+  targetPort: 8081

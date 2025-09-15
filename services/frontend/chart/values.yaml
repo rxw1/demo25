@@ -1,0 +1,10 @@
+image:
+  repository: frontend
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  port: 80
+  targetPort: 3000
+  type: ClusterIP
+env:
+  GRAPHQL_URL: http://productsvc.app.svc.cluster.local/graphql

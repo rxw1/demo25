@@ -1,4 +1,4 @@
-NAME=productsvc
+NAME=frontend
 CLUSTER_NAME=poc
 NAMESPACE=app
 CHART=./chart
@@ -32,7 +32,7 @@ deploy: build import upgrade restart
 .PHONY: run
 run:
 	docker run -d --name $(NAME) $(NAME):latest
-	
+
 .PHONY: lint
 lint:
 	helm lint chart
@@ -44,13 +44,8 @@ test-dns:
 
 ###
 
-.PHONY: gqlgen
-graphql: gqlgen
-gqlgen:
-	go run github.com/99designs/gqlgen generate
-
-.PHONY: clean
-clean:
-	$(RM) internal/graphql/generated.go
-	$(RM) internal/model/models_gen.go
+.PHONY: codegen
+graphql: codegen
+codegen:
+	npm run codegen
 
