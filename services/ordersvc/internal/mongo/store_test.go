@@ -28,7 +28,7 @@ func TestStore_GetAllOrders(t *testing.T) {
 		{
 			name:    "valid uri",
 			uri:     "mongodb://localhost:27017",
-			want:    []Order, // TODO: fill in expected result
+			want:    []bson.M{}, // expecting no orders in default test DB/collection
 			wantErr: false,
 		},
 		{

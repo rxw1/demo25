@@ -36,7 +36,6 @@ run:
 .PHONY: lint
 lint:
 	helm lint chart
-	staticcheck ./...
 
 .PHONY: test-dns
 test-dns:
@@ -49,3 +48,5 @@ graphql: codegen
 codegen:
 	npm run codegen
 
+.PHONY: mrproper
+	$(RM) -R node_modules

@@ -1,7 +1,9 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+--CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+\i pgulid.sql
+--CREATE EXTENSION ulid;
 
 CREATE TABLE IF NOT EXISTS products (
-    id TEXT PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4 (),
+    id TEXT PRIMARY KEY NOT NULL DEFAULT generate_ulid(),
     name TEXT NOT NULL UNIQUE,
     price INT NOT NULL
 );

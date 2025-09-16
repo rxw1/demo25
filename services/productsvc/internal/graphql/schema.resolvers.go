@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"rxw1/productsvc/internal/logging"
 	"rxw1/productsvc/internal/model"
+	"strings"
 	"time"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
@@ -18,7 +19,20 @@ import (
 // CreateOrder is the resolver for the createOrder field.
 func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qty int32) (*model.Order, error) {
 	ctx2 := logging.With(ctx, "productID", productID)
-	logging.From(ctx2).Info("mutate create order")
+	logging.From(ctx2).Info("mutationResolver CreateOrder")
+
+	// data := []byte(productID)
+	// msg, err := r.NC.Request("products.price", data, 2*time.Second)
+	// if err != nil {
+	// 	logging.From(ctx2).Error("failed to request price", "subject", "orders.all", "error", err)
+	// 	return nil, err
+	// }
+
+	// var price int
+	// if err := json.Unmarshal(msg.Data, &price); err != nil {
+	// 	logging.From(ctx2).Error("failed to get price", "error", err)
+	// 	return nil, err
+	// }
 
 	id, err := gonanoid.New()
 	if err != nil {
@@ -26,26 +40,18 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 		return nil, err
 	}
 
-	data := []byte(productID)
-	msg, err := r.NC.Request("products.price", data, 2*time.Second)
+	eventID, err := gonanoid.New()
 	if err != nil {
-		logging.From(ctx2).Error("failed to request price", "subject", "orders.all", "error", err)
-		return nil, err
-	}
-
-	var price int
-	if err := json.Unmarshal(msg.Data, &price); err != nil {
-		logging.From(ctx2).Error("failed to get price", "error", err)
+		logging.From(ctx2).Error("failed to generate eventID", "error", err)
 		return nil, err
 	}
 
 	event := map[string]any{
-		"id":        id,
-		"eventID":   fmt.Sprintf("evt-%d", time.Now().UnixNano()),
+		"id":        strings.ToUpper(id),
+		"eventID":   strings.ToUpper(eventID),
 		"productID": productID,
 		"qty":       qty,
 		"createdAt": time.Now().UTC().Format(time.RFC3339),
-		"price":     price, // TODO fetch real price from products table
 	}
 
 	b, err := json.Marshal(event)
