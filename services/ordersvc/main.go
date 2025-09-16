@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -44,30 +43,25 @@ func Logging(next http.Handler) http.Handler {
 func main() {
 	ctx := context.Background()
 
-	buildVersion := "dev" // set via -ldflags "-X main.buildVersion=..."
+	// TODO
+	// buildVersion := "dev" // set via -ldflags "-X main.buildVersion=..."
 
-	cfg := logging.Config{
-		Level:       getenv("LOG_LEVEL", "info"),
-		JSON:        getenv("LOG_FORMAT", "json") == "json",
-		AddSource:   getenv("LOG_SOURCE", "false") == "true",
-		Service:     "ordersvc",
-		Version:     buildVersion,
-		Environment: getenv("ENV", "dev"),
-		SetDefault:  true, // so slog.Default() works across the app
-	}
-
-	logger, err := logging.New(cfg)
-	if err != nil {
-		panic(err)
-	}
-
-	logger.Info("boot", "pid", os.Getpid())
-
-	// Later in handlers:
-	// func h(w http.ResponseWriter, r *http.Request) {
-	// ctx := logging.With(r.Context(), "user_id", uid)
-	// logging.From(ctx).Error("db query failed", "err", err)
+	// cfg := logging.Config{
+	// 	Level:       getenv("LOG_LEVEL", "debug"),
+	// 	JSON:        getenv("LOG_FORMAT", "json") == "json",
+	// 	AddSource:   getenv("LOG_SOURCE", "true") == "true",
+	// 	Service:     "ordersvc",
+	// 	Version:     buildVersion,
+	// 	Environment: getenv("ENV", "dev"),
+	// 	SetDefault:  true, // so slog.Default() works across the app
 	// }
+
+	// logger, err := logging.New(cfg)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// logger.Info("boot", "pid", os.Getpid())
 
 	// Mongo
 	store, err := mongo.Connect(ctx, os.Getenv("MONGO_URI"))
@@ -82,23 +76,16 @@ func main() {
 	}
 	defer nc.Drain()
 
-	// NATS Subscriber
-	// sub, _ := nc.Subscribe("greet.*", func(msg *nats.Msg) {
-	// 	name := msg.Subject[6:]
-	// 	msg.Respond([]byte("hello, " + name))
-	// })
-
 	sub, err := mynats.SubscribeToOrdersCreated(ctx, nc, store)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer sub.Unsubscribe()
 
 	sub2, err := mynats.SubscribeToOrdersRequested(ctx, nc, store)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	defer sub.Unsubscribe()
 	defer sub2.Unsubscribe()
 
 	// Chi
@@ -109,7 +96,7 @@ func main() {
 			ctx := logging.With(r.Context(), "user_id", 789234) // TODO
 			logging.From(ctx).Error("db query failed", "err", err)
 
-			// Simple health check for demo; use real one in prod.
+			// TODO
 			if r.URL.Path == "/healthz" {
 				w.WriteHeader(200)
 				return
@@ -119,52 +106,15 @@ func main() {
 	})
 
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
-	// r.Get("/readyz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
-	// r.Get("/livez", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
-
-	// r.Post("/orders", func(w http.ResponseWriter, r *http.Request) {
-	// 	// FIXME
-
-	// 	ctx := logging.With(r.Context(), "productId", 789234)
-	// 	// logging.From(ctx).Error("create order", "err", err)
-
-	// 	res, err := store.CreateOrder(r.Context())
-	// 	if err != nil {
-	// 		logging.From(r.Context()).Error("create order failed", "err", err)
-	// 		w.WriteHeader(500)
-	// 		return
-	// 	}
-
-	// 	logging.From(ctx).Info("order created", "res", res)
-
-	// 	w.WriteHeader(201)
-	// })
-
-	r.Get("/orders", func(w http.ResponseWriter, r *http.Request) {
-		orders, err := store.GetAllOrders(r.Context())
-		if err != nil {
-			logging.From(r.Context()).Error("get orders failed", "err", err)
-			w.WriteHeader(500)
-			return
-		}
-
-		logging.From(r.Context()).Info("orders fetched", "count", len(orders))
-
-		if err := json.NewEncoder(w).Encode(orders); err != nil {
-			logging.From(r.Context()).Error("encode orders failed", "err", err)
-			w.WriteHeader(500)
-			return
-		}
-	})
 
 	// Start server
 	log.Println("ordersvc up on :8081")
 	log.Fatal(http.ListenAndServe(":8081", r))
 }
 
-func getenv(k, def string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
-	}
-	return def
-}
+// func getenv(k, def string) string {
+// 	if v := os.Getenv(k); v != "" {
+// 		return v
+// 	}
+// 	return def
+// }

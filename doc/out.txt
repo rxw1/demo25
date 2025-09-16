@@ -1,6 +1,0 @@
-NAME                          READY   STATUS             RESTARTS   AGE   IP           NODE               NOMINATED NODE   READINESS GATES
-frontend-64d5fc7587-9889p     0/1     ImagePullBackOff   0          41s   10.42.0.17   k3d-poc-server-0   <none>           <none>
-frontend-d8b5d4458-qgr2f      0/1     ImagePullBackOff   0          11h   10.42.2.7    k3d-poc-agent-0    <none>           <none>
-ordersvc-78697ffcb9-lhj6n     0/1     ImagePullBackOff   0          11h   10.42.0.12   k3d-poc-server-0   <none>           <none>
-productsvc-57d497ddd8-rj5sj   0/1     ImagePullBackOff   0          11h   10.42.0.11   k3d-poc-server-0   <none>           <none>
-productsvc-5d99bf9888-5dzmh   0/1     ImagePullBackOff   0          10h   10.42.2.9    k3d-poc-agent-0    <none>           <none>

@@ -26,12 +26,26 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 		return nil, err
 	}
 
+	data := []byte(productID)
+	msg, err := r.NC.Request("products.price", data, 2*time.Second)
+	if err != nil {
+		logging.From(ctx2).Error("failed to request price", "subject", "orders.all", "error", err)
+		return nil, err
+	}
+
+	var price int
+	if err := json.Unmarshal(msg.Data, &price); err != nil {
+		logging.From(ctx2).Error("failed to get price", "error", err)
+		return nil, err
+	}
+
 	event := map[string]any{
 		"id":        id,
 		"eventID":   fmt.Sprintf("evt-%d", time.Now().UnixNano()),
 		"productID": productID,
 		"qty":       qty,
 		"createdAt": time.Now().UTC().Format(time.RFC3339),
+		"price":     price, // TODO fetch real price from products table
 	}
 
 	b, err := json.Marshal(event)
@@ -134,6 +148,28 @@ func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
 	logging.From(ctx2).Info("fetched orders", "count", len(orders))
 	fmt.Printf("orders: %+v\n", orders)
 	return orders, nil
+}
+
+// GetPrice is the resolver for the getPrice field.
+func (r *queryResolver) GetPrice(ctx context.Context, productID string) (int32, error) {
+	ctx2 := logging.With(ctx, "productID", productID)
+	logging.From(ctx2).Info("query get price")
+
+	data := []byte(productID)
+	msg, err := r.NC.Request("products.price", data, 2*time.Second)
+	if err != nil {
+		logging.From(ctx2).Error("failed to request price", "subject", "products.price", "error", err)
+		return 0, err
+	}
+
+	var price int
+	if err := json.Unmarshal(msg.Data, &price); err != nil {
+		logging.From(ctx2).Error("failed to get price", "error", err)
+		return 0, err
+	}
+
+	logging.From(ctx2).Info("fetched price", "price", price)
+	return int32(price), nil
 }
 
 // Mutation returns MutationResolver implementation.

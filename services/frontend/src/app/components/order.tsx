@@ -8,6 +8,7 @@ const Q = gql`
       productId
       qty
       createdAt
+      # price
     }
   }
 `
@@ -17,6 +18,7 @@ type Order = {
   productId: string
   qty: number
   createdAt: string
+  // price: number
 }
 
 type Orders = {
@@ -35,6 +37,7 @@ export default function Products() {
           <div>Product ID: {p.productId}</div>
           <div>Quantity: {p.qty}</div>
           <div>Created At: {new Date(p.createdAt).toLocaleString()}</div>
+          {/* <div>Price: {p.price}</div> */}
         </div>
       ))}
     </div>

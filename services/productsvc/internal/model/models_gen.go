@@ -11,6 +11,7 @@ type Order struct {
 	ProductID string `json:"productId"`
 	EventID   string `json:"eventId"`
 	CreatedAt string `json:"createdAt"`
+	Price     int32  `json:"price"`
 }
 
 type Product struct {

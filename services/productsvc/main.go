@@ -28,6 +28,26 @@ var migrationsFS embed.FS
 func main() {
 	ctx := context.Background()
 
+	// TODO
+	// buildVersion := "dev" // set via -ldflags "-X main.buildVersion=..."
+
+	// cfg := logging.Config{
+	// 	Level:       getenv("LOG_LEVEL", "debug"),
+	// 	JSON:        getenv("LOG_FORMAT", "json") == "json",
+	// 	AddSource:   getenv("LOG_SOURCE", "true") == "true",
+	// 	Service:     "productsvc",
+	// 	Version:     buildVersion,
+	// 	Environment: getenv("ENV", "dev"),
+	// 	SetDefault:  true, // so slog.Default() works across the app
+	// }
+
+	// logger, err := logging.New(cfg)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// logger.Info("boot", "pid", os.Getpid())
+
 	// Postgres
 	pg, err := db.Connect(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -80,3 +100,10 @@ func main() {
 	log.Println("productsvc up on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
+
+// func getenv(k, def string) string {
+// 	if v := os.Getenv(k); v != "" {
+// 		return v
+// 	}
+// 	return def
+// }

@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"rxw1/ordersvc/internal/logging"
@@ -38,13 +39,13 @@ func (s *Store) AddOrder(ctx context.Context, evtID, productID string, qty int, 
 		bson.M{"eventId": evtID},
 		bson.M{
 			"$setOnInsert": bson.M{
-				"id":        id,
+				"id":        strings.ToUpper(id),
 				"eventId":   evtID,
 				"productId": productID,
 				"qty":       qty,
 				"createdAt": createdAt,
 			},
-		}, options.Update().SetUpsert(false))
+		}, options.Update().SetUpsert(true))
 	logging.From(ctx2).Debug("upsert result", "result", res, "error", err)
 	return err
 }
@@ -61,6 +62,5 @@ func (s *Store) GetAllOrders(ctx context.Context) ([]bson.M, error) {
 		logging.From(ctx2).Error("failed to decode orders", "error", err)
 		return nil, err
 	}
-	logging.From(ctx2).Debug("fetched orders", "count", len(orders), "orders", orders)
 	return orders, nil
 }

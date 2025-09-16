@@ -30,6 +30,7 @@ export type MutationCreateOrderArgs = {
 export type Order = {
   __typename?: 'Order';
   createdAt: Scalars['String']['output'];
+  eventId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   productId: Scalars['ID']['output'];
   qty: Scalars['Int']['output'];

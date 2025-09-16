@@ -10,15 +10,17 @@ type Order {
   productId: ID!
   eventId: String!
   createdAt: String!
+  price: Int!
 }
 
 type Query {
   productById(productId: ID!): Product
   products: [Product!]!
-  orders: [Order!]!
+  orders: [Order!]!,
+  getPrice(productId: ID!): Int!
 }
 
 type Mutation {
   createOrder(productId: ID!, qty: Int!): Order
 }
- 
+  

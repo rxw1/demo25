@@ -46,8 +46,8 @@ export default function Products() {
   const { data } = useQuery<Products>(Q, {})
   const [createOrder] = useMutation<OrderResult>(M)
 
-  function handleOrder(productId: string, price: number) {
-    createOrder({ variables: { productId, qty: 1 } })
+  function handleOrder(productId: string, price: number, qty: number) {
+    createOrder({ variables: { productId, qty } })
       .then((response) => {
         console.log("Order created:", response.data?.createOrder)
       })
@@ -69,7 +69,17 @@ export default function Products() {
         {data?.products.map((p) => (
           <div key={p.id} style={{}}>
             {p.id} {p.name} ${p.price}{" "}
-            <button onClick={() => handleOrder(p.id, p.price)}>ORDER</button>
+            <button
+              onClick={(e) => {
+                const input = e.currentTarget
+                  .nextElementSibling as HTMLInputElement | null
+                const qty = input ? parseInt(input.value || "0", 10) : 1
+                handleOrder(p.id, p.price, qty)
+              }}
+            >
+              ORDER
+            </button>
+            <input type="number" defaultValue={1} style={{ width: 40 }} />
           </div>
         ))}
       </div>
