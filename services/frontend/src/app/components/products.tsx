@@ -61,14 +61,21 @@ export default function Products() {
       <h3>Products</h3>
       <div
         style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: 16,
+          width: 480,
         }}
       >
         {data?.products.map((p) => (
-          <div key={p.id} style={{}}>
-            {p.id} {p.name} ${p.price}{" "}
+          <div
+            key={p.id}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr auto auto",
+              gap: 10,
+            }}
+          >
+            <div>{p.id.slice(9, 14)}</div>
+            <div>{p.name}</div>
+            <div>${p.price}</div>
             <button
               onClick={(e) => {
                 const input = e.currentTarget

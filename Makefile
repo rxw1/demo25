@@ -11,8 +11,10 @@ dev-down:
 	docker compose -f $(COMPOSE_FILE) down -v
 
 .PHONY: dev-prune
+prune: dev-prune
 dev-prune:
 	docker compose -f $(COMPOSE_FILE) rm -fsv
+	docker rmi -f $(shell docker images -qa)
 
 #############################################################################
 

@@ -32,6 +32,7 @@ export type Order = {
   createdAt: Scalars['String']['output'];
   eventId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  price: Scalars['Int']['output'];
   productId: Scalars['ID']['output'];
   qty: Scalars['Int']['output'];
 };
@@ -45,9 +46,15 @@ export type Product = {
 
 export type Query = {
   __typename?: 'Query';
+  getPrice: Scalars['Int']['output'];
   orders: Array<Order>;
   productById?: Maybe<Product>;
   products: Array<Product>;
+};
+
+
+export type QueryGetPriceArgs = {
+  productId: Scalars['ID']['input'];
 };
 
 

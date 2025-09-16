@@ -5,13 +5,13 @@ go 1.25.0
 require (
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/nats-io/nats.go v1.45.0
+	github.com/oklog/ulid/v2 v2.1.1
 	go.mongodb.org/mongo-driver v1.17.4
 )
 
 require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
-	github.com/matoous/go-nanoid/v2 v2.1.0 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/nats-io/nkeys v0.4.11 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect

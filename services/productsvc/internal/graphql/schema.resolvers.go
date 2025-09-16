@@ -7,13 +7,11 @@ package graphql
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"rxw1/productsvc/internal/logging"
 	"rxw1/productsvc/internal/model"
-	"strings"
 	"time"
 
-	gonanoid "github.com/matoous/go-nanoid/v2"
+	ulid "github.com/oklog/ulid/v2"
 )
 
 // CreateOrder is the resolver for the createOrder field.
@@ -21,34 +19,11 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 	ctx2 := logging.With(ctx, "productID", productID)
 	logging.From(ctx2).Info("mutationResolver CreateOrder")
 
-	// data := []byte(productID)
-	// msg, err := r.NC.Request("products.price", data, 2*time.Second)
-	// if err != nil {
-	// 	logging.From(ctx2).Error("failed to request price", "subject", "orders.all", "error", err)
-	// 	return nil, err
-	// }
-
-	// var price int
-	// if err := json.Unmarshal(msg.Data, &price); err != nil {
-	// 	logging.From(ctx2).Error("failed to get price", "error", err)
-	// 	return nil, err
-	// }
-
-	id, err := gonanoid.New()
-	if err != nil {
-		logging.From(ctx2).Error("failed to generate id", "error", err)
-		return nil, err
-	}
-
-	eventID, err := gonanoid.New()
-	if err != nil {
-		logging.From(ctx2).Error("failed to generate eventID", "error", err)
-		return nil, err
-	}
+	id := ulid.Make().String()
 
 	event := map[string]any{
-		"id":        strings.ToUpper(id),
-		"eventID":   strings.ToUpper(eventID),
+		"id":        id,
+		"eventID":   ulid.Make().String(),
 		"productID": productID,
 		"qty":       qty,
 		"createdAt": time.Now().UTC().Format(time.RFC3339),
@@ -152,7 +127,6 @@ func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
 	}
 
 	logging.From(ctx2).Info("fetched orders", "count", len(orders))
-	fmt.Printf("orders: %+v\n", orders)
 	return orders, nil
 }
 

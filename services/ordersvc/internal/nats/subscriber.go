@@ -13,9 +13,18 @@ import (
 )
 
 type Event struct {
-	ID, ProductID string
-	Qty           int
-	CreatedAt     string
+	ID        string
+	ProductID string
+	CreatedAt string
+	Qty       int
+}
+
+type Order struct {
+	ID        string
+	EventID   string
+	ProductID string
+	Qty       int32
+	CreatedAt string
 }
 
 func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, store *mongo.Store) (*nats.Subscription, error) {
@@ -26,8 +35,20 @@ func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, store *mongo.S
 			logging.From(ctx2).Error("failed to unmarshal event", "data", string(m.Data))
 			return
 		}
-		ts, _ := time.Parse(time.RFC3339, e.CreatedAt)
-		_ = store.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
+
+		ts, err := time.Parse(time.RFC3339, e.CreatedAt)
+		if err != nil {
+			logging.From(ctx2).Error("failed to parse time", "error", err, "createdAt", e.CreatedAt)
+			return
+		}
+
+		err = store.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts) // TODO: handle error
+		if err != nil {
+			logging.From(ctx2).Error("failed to add order", "error", err)
+			return
+		}
+
+		fmt.Printf("order created: %+v\n", e)
 	})
 	return sub, err
 }
@@ -47,7 +68,7 @@ func SubscribeToOrdersRequested(ctx context.Context, nc *nats.Conn, store *mongo
 			return
 		}
 
-		fmt.Printf("responding to orders.all: %s\n", string(b))
+		logging.From(ctx2).Info("responding to orders.all", "count", len(res))
 
 		if err := m.Respond(b); err != nil {
 			logging.From(ctx2).Error("failed to respond to orders.all", "error", err)

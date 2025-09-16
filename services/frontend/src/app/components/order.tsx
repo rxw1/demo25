@@ -29,14 +29,20 @@ export default function Products() {
   const { data } = useQuery<Orders>(Q, {})
 
   return (
-    <div>
+    <div style={{ width: 480 }}>
       <h3>Orders ({data?.orders.length})</h3>
       {data?.orders.map((p) => (
-        <div key={p.id} style={{ marginBottom: 12 }}>
-          <div>Order ID: {p.id}</div>
-          <div>Product ID: {p.productId}</div>
-          <div>Quantity: {p.qty}</div>
-          <div>Created At: {new Date(p.createdAt).toLocaleString()}</div>
+        <div
+          key={p.id}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr auto",
+          }}
+        >
+          <div>{p.id.slice(9, 14)}</div>
+          <div>{p.productId.slice(9, 14)}</div>
+          <div>{p.qty}</div>
+          <div>{new Date(p.createdAt).toLocaleString()}</div>
           {/* <div>Price: {p.price}</div> */}
         </div>
       ))}
