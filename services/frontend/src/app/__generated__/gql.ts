@@ -17,11 +17,13 @@ type Documents = {
     "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n": typeof types.FetchProductsDocument,
     "\n  query FetchProductById($id: ID!) {\n    productById(productId: $id) {\n      id\n      name\n      price\n    }\n  }\n": typeof types.FetchProductByIdDocument,
     "\n  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.CreateOrderMutationDocument,
+    "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.FetchOrdersDocument,
 };
 const documents: Documents = {
     "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n": types.FetchProductsDocument,
     "\n  query FetchProductById($id: ID!) {\n    productById(productId: $id) {\n      id\n      name\n      price\n    }\n  }\n": types.FetchProductByIdDocument,
     "\n  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.CreateOrderMutationDocument,
+    "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.FetchOrdersDocument,
 };
 
 /**
@@ -50,6 +52,10 @@ export function graphql(source: "\n  query FetchProductById($id: ID!) {\n    pro
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

@@ -3,6 +3,7 @@ package nats
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"rxw1/ordersvc/internal/logging"
@@ -17,18 +18,41 @@ type Event struct {
 	CreatedAt     string
 }
 
-func Start(ctx context.Context, nc *nats.Conn, store *mongo.Store) error {
+func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, store *mongo.Store) (*nats.Subscription, error) {
 	ctx2 := logging.With(ctx, "nats", "Start")
-	logging.From(ctx2).Debug("starting nats subscriber")
-	subscription, err := nc.Subscribe("orders.created", func(m *nats.Msg) {
+	sub, err := nc.Subscribe("orders.created", func(m *nats.Msg) {
 		var e Event
 		if json.Unmarshal(m.Data, &e) != nil {
 			logging.From(ctx2).Error("failed to unmarshal event", "data", string(m.Data))
 			return
 		}
 		ts, _ := time.Parse(time.RFC3339, e.CreatedAt)
-		_ = store.UpsertOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
+		_ = store.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
 	})
-	logging.From(ctx2).Debug("nats subscriber started", "subscription", subscription, "error", err)
-	return err
+	return sub, err
+}
+
+func SubscribeToOrdersRequested(ctx context.Context, nc *nats.Conn, store *mongo.Store) (*nats.Subscription, error) {
+	ctx2 := logging.With(ctx, "nats", "Start")
+	sub, err := nc.Subscribe("orders.all", func(m *nats.Msg) {
+		res, err := store.GetAllOrders(ctx)
+		if err != nil {
+			logging.From(ctx2).Error("failed to get all orders", "error", err)
+			return
+		}
+
+		b, err := json.Marshal(res)
+		if err != nil {
+			logging.From(ctx2).Error("failed to marshal orders", "error", err)
+			return
+		}
+
+		fmt.Printf("responding to orders.all: %s\n", string(b))
+
+		if err := m.Respond(b); err != nil {
+			logging.From(ctx2).Error("failed to respond to orders.all", "error", err)
+			return
+		}
+	})
+	return sub, err
 }

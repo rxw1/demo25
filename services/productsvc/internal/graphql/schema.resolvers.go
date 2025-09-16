@@ -11,24 +11,28 @@ import (
 	"rxw1/productsvc/internal/logging"
 	"rxw1/productsvc/internal/model"
 	"time"
+
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
-// CreateTodo is the resolver for the createTodo field.
+// CreateOrder is the resolver for the createOrder field.
 func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qty int32) (*model.Order, error) {
 	ctx2 := logging.With(ctx, "productID", productID)
 	logging.From(ctx2).Info("mutate create order")
 
-	// TODO Validate input
-	// In real life, you'd want to check productID exists, stock levels, etc.
+	id, err := gonanoid.New()
+	if err != nil {
+		logging.From(ctx2).Error("failed to generate id", "error", err)
+		return nil, err
+	}
 
-	// Publish event to NATS
 	event := map[string]any{
-		"id":        fmt.Sprintf("evt-%d", time.Now().UnixNano()),
+		"id":        id,
+		"eventID":   fmt.Sprintf("evt-%d", time.Now().UnixNano()),
 		"productID": productID,
 		"qty":       qty,
 		"createdAt": time.Now().UTC().Format(time.RFC3339),
 	}
-	logging.From(ctx2).Info("publishing event", "event", event)
 
 	b, err := json.Marshal(event)
 	if err != nil {
@@ -41,18 +45,11 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 		return nil, err
 	}
 
-	// TODO
-	// Flush Redis cache for this product (to update stock levels, etc.)
-	// if r.FF.RedisEnabled(ctx) {
-	// 	_ = r.RC.Del(ctx, "product:"+productID)
-	// }
-
-	// TODO
-	// Return order (in real life, you'd want to store this in Postgres)
 	order := &model.Order{
 		ID:        event["id"].(string),
-		ProductID: productID,
-		Qty:       int32(qty),
+		Qty:       event["qty"].(int32),
+		ProductID: event["productID"].(string),
+		EventID:   event["eventID"].(string),
 		CreatedAt: event["createdAt"].(string),
 	}
 
@@ -60,12 +57,11 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 	return order, nil
 }
 
-// Todos is the resolver for the todos field.
+// ProductByID is the resolver for the productById field.
 func (r *queryResolver) ProductByID(ctx context.Context, productID string) (*model.Product, error) {
 	ctx2 := logging.With(ctx, "productID", productID)
 	logging.From(ctx2).Info("query product by id")
 
-	// Check Redis cache
 	useCache := r.FF.RedisEnabled(ctx)
 	if useCache {
 		if s, err := r.RC.Get(ctx, "product:"+productID); err == nil {
@@ -76,13 +72,11 @@ func (r *queryResolver) ProductByID(ctx context.Context, productID string) (*mod
 		}
 	}
 
-	// Fetch from Postgres
 	p, err := r.PG.GetProduct(ctx, productID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Store in Redis cache
 	if useCache {
 		b, _ := json.Marshal(p)
 		_ = r.RC.Set(ctx, "product:"+productID, string(b), 5*time.Minute)
@@ -96,7 +90,6 @@ func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) 
 	ctx2 := logging.With(ctx)
 	logging.From(ctx2).Info("query products")
 
-	// Check Redis cache
 	useCache := r.FF.RedisEnabled(ctx)
 	if useCache {
 		if s, err := r.RC.Get(ctx, "products:all"); err == nil {
@@ -107,13 +100,11 @@ func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) 
 		}
 	}
 
-	// Fetch from Postgres
 	rows, err := r.PG.GetProducts(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Store in Redis cache
 	if useCache {
 		b, _ := json.Marshal(rows)
 		_ = r.RC.Set(ctx, "products:all", string(b), 5*time.Minute)
@@ -121,6 +112,28 @@ func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) 
 
 	logging.From(ctx2).Info("fetched products", "count", len(rows))
 	return rows, nil
+}
+
+// Orders is the resolver for the orders field.
+func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
+	ctx2 := logging.With(ctx)
+	logging.From(ctx2).Info("query orders")
+
+	msg, err := r.NC.Request("orders.all", nil, 2*time.Second)
+	if err != nil {
+		logging.From(ctx2).Error("failed to request orders", "subject", "orders.all", "error", err)
+		return nil, err
+	}
+
+	var orders []*model.Order
+	if err := json.Unmarshal(msg.Data, &orders); err != nil {
+		logging.From(ctx2).Error("failed to unmarshal orders", "error", err)
+		return nil, err
+	}
+
+	logging.From(ctx2).Info("fetched orders", "count", len(orders))
+	fmt.Printf("orders: %+v\n", orders)
+	return orders, nil
 }
 
 // Mutation returns MutationResolver implementation.

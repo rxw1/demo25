@@ -1,19 +1,21 @@
 type Product {
   id: ID!
-  name: String!
   price: Int!
+  name: String!
 }
 
 type Order {
   id: ID!
-  productId: ID!
   qty: Int!
+  productId: ID!
+  eventId: String!
   createdAt: String!
 }
 
 type Query {
   productById(productId: ID!): Product
   products: [Product!]!
+  orders: [Order!]!
 }
 
 type Mutation {

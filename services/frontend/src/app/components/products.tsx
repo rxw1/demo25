@@ -42,7 +42,7 @@ type OrderResult = {
   }
 }
 
-export default function Produts() {
+export default function Products() {
   const { data } = useQuery<Products>(Q, {})
   const [createOrder] = useMutation<OrderResult>(M)
 
@@ -57,20 +57,22 @@ export default function Produts() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        gap: 16,
-        padding: 24,
-      }}
-    >
-      {data?.products.map((p) => (
-        <div key={p.id} style={{}}>
-          {p.id} {p.name} ${p.price}{" "}
-          <button onClick={() => handleOrder(p.id, p.price)}>ORDER</button>
-        </div>
-      ))}
+    <div>
+      <h3>Products</h3>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: 16,
+        }}
+      >
+        {data?.products.map((p) => (
+          <div key={p.id} style={{}}>
+            {p.id} {p.name} ${p.price}{" "}
+            <button onClick={() => handleOrder(p.id, p.price)}>ORDER</button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

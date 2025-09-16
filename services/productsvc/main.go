@@ -18,6 +18,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -42,6 +43,12 @@ func main() {
 
 	// NATS
 	nc, err := nats.Connect(os.Getenv("NATS_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Jetstream
+	_, err = jetstream.New(nc)
 	if err != nil {
 		log.Fatal(err)
 	}

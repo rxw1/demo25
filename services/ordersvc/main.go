@@ -11,7 +11,7 @@ import (
 
 	"rxw1/ordersvc/internal/logging"
 	"rxw1/ordersvc/internal/mongo"
-	nsub "rxw1/ordersvc/internal/nats"
+	mynats "rxw1/ordersvc/internal/nats"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go"
@@ -80,19 +80,33 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer nc.Drain()
 
 	// NATS Subscriber
-	if err := nsub.Start(ctx, nc, store); err != nil {
+	// sub, _ := nc.Subscribe("greet.*", func(msg *nats.Msg) {
+	// 	name := msg.Subject[6:]
+	// 	msg.Respond([]byte("hello, " + name))
+	// })
+
+	sub, err := mynats.SubscribeToOrdersCreated(ctx, nc, store)
+	if err != nil {
 		log.Fatal(err)
 	}
 
+	sub2, err := mynats.SubscribeToOrdersRequested(ctx, nc, store)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer sub.Unsubscribe()
+	defer sub2.Unsubscribe()
+
+	// Chi
 	r := chi.NewRouter()
-
 	r.Use(Logging)
-
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := logging.With(r.Context(), "user_id", 789234)
+			ctx := logging.With(r.Context(), "user_id", 789234) // TODO
 			logging.From(ctx).Error("db query failed", "err", err)
 
 			// Simple health check for demo; use real one in prod.

@@ -12,7 +12,7 @@ dev-down:
 
 .PHONY: dev-prune
 dev-prune:
-	docker compose -f docker/compose.dev.yml rm -fsv
+	docker compose -f $(COMPOSE_FILE) rm -fsv
 
 #############################################################################
 

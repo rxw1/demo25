@@ -5,32 +5,36 @@ const Q = gql`
   query FetchOrders {
     orders {
       id
-      name
-      price
+      productId
+      qty
+      createdAt
     }
   }
 `
 
 type Order = {
   id: string
-  name: string
-  price: number
+  productId: string
+  qty: number
+  createdAt: string
 }
 
 type Orders = {
-  products: Order[]
+  orders: Order[]
 }
 
-export default function Produts() {
+export default function Products() {
   const { data } = useQuery<Orders>(Q, {})
 
   return (
     <div>
-      {data?.products.map((p) => (
+      <h3>Orders ({data?.orders.length})</h3>
+      {data?.orders.map((p) => (
         <div key={p.id} style={{ marginBottom: 12 }}>
-          <button onClick={() => alert(`Order ${p.name} for ${p.price}?`)}>
-            {p.name} {p.price}
-          </button>
+          <div>Order ID: {p.id}</div>
+          <div>Product ID: {p.productId}</div>
+          <div>Quantity: {p.qty}</div>
+          <div>Created At: {new Date(p.createdAt).toLocaleString()}</div>
         </div>
       ))}
     </div>
