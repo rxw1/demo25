@@ -4,6 +4,7 @@ import OrderProductButton from "./order-product-button"
 import SomeLinks from "./some-links"
 import Products from "./products"
 import Order from "./order"
+import LastOrderCreated from './last-order-created';
 
 const FetchProductsQuery = gql`
   query FetchProducts {
@@ -35,38 +36,12 @@ const CreateOrderMutation = gql`
   }
 `
 
-// type ProductByIdData = {
-//   productById?: {
-//     id: string
-//     name: string
-//     price: number
-//   }
-// }
-
 export default function Comp1() {
-  // const { data } = useQuery<ProductByIdData>(FetchProductByIdQuery, {
-  //   variables: { id: "p1" },
-  // })
-  // const [createOrder] = useMutation(CreateOrderMutation)
   return (
     <div style={{ padding: 24 }}>
-      {/* <OrderProductButton
-          productId={data.productById.id}
-          onOrderCreated={(order) => console.log("Order created:", order)}
-        /> */}
-
       <Products />
-      <Order />
-
-      {/* <pre>{JSON.stringify(data?.productById, null, 2)}</pre> */}
-
-      {/* {data?.productById?.id && (
-        <OrderProductButton
-          productId={data.productById.id}
-          onOrderCreated={(order) => console.log("Order created:", order)}
-        />
-      )} */}
-
+      <LastOrderCreated />
+      {/* <Order /> */}
       <SomeLinks />
     </div>
   )

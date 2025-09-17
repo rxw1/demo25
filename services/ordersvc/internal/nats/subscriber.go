@@ -29,22 +29,24 @@ type Order struct {
 
 func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, store *mongo.Store) (*nats.Subscription, error) {
 	ctx2 := logging.With(ctx, "nats", "Start")
-	sub, err := nc.Subscribe("orders.created", func(m *nats.Msg) {
+	sub, err := nc.Subscribe("order.created", func(m *nats.Msg) {
 		var e Event
 		if json.Unmarshal(m.Data, &e) != nil {
-			logging.From(ctx2).Error("failed to unmarshal event", "data", string(m.Data))
+			logging.From(ctx2).Error("EVENT failed to unmarshal event", "data", string(m.Data))
 			return
 		}
 
 		ts, err := time.Parse(time.RFC3339, e.CreatedAt)
 		if err != nil {
-			logging.From(ctx2).Error("failed to parse time", "error", err, "createdAt", e.CreatedAt)
+			logging.From(ctx2).Error("EVENT failed to parse time", "error", err, "createdAt", e.CreatedAt)
 			return
 		}
 
-		err = store.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts) // TODO: handle error
+		logging.From(ctx2).Info("EVENT received order created", "eventId", e.ID, "productId", e.ProductID, "qty", e.Qty, "createdAt", e.CreatedAt)
+
+		err = store.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
 		if err != nil {
-			logging.From(ctx2).Error("failed to add order", "error", err)
+			logging.From(ctx2).Error("EVENT failed to add order", "error", err)
 			return
 		}
 

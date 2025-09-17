@@ -7,10 +7,12 @@ package graphql
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"rxw1/productsvc/internal/logging"
 	"rxw1/productsvc/internal/model"
 	"time"
 
+	nats "github.com/nats-io/nats.go"
 	ulid "github.com/oklog/ulid/v2"
 )
 
@@ -19,10 +21,8 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 	ctx2 := logging.With(ctx, "productID", productID)
 	logging.From(ctx2).Info("mutationResolver CreateOrder")
 
-	id := ulid.Make().String()
-
 	event := map[string]any{
-		"id":        id,
+		"id":        ulid.Make().String(),
 		"eventID":   ulid.Make().String(),
 		"productID": productID,
 		"qty":       qty,
@@ -35,7 +35,7 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 		return nil, err
 	}
 
-	if err := r.NC.Publish("orders.created", b); err != nil {
+	if err := r.NC.Publish("order.created", b); err != nil {
 		logging.From(ctx2).Error("failed to publish event", "error", err)
 		return nil, err
 	}
@@ -152,11 +152,95 @@ func (r *queryResolver) GetPrice(ctx context.Context, productID string) (int32, 
 	return int32(price), nil
 }
 
+// CurrentTime is the resolver for the currentTime field.
+func (r *subscriptionResolver) CurrentTime(ctx context.Context) (<-chan *model.Time, error) {
+	// panic(fmt.Errorf("not implemented: CurrentTime - currentTime"))
+
+	ch := make(chan *model.Time)
+
+	// You can (and probably should) handle your channels in a central place outside of `schema.resolvers.go`.
+	// For this example we'll simply use a Goroutine with a simple loop.
+	go func() {
+		// Handle deregistration of the channel here. Note the `defer`
+		defer close(ch)
+
+		for {
+			// In our example we'll send the current time every second.
+			time.Sleep(1 * time.Second)
+			fmt.Println("Tick")
+
+			// Prepare your object.
+			currentTime := time.Now()
+			t := &model.Time{
+				UnixTime:  int32(currentTime.Unix()),
+				TimeStamp: currentTime.Format(time.RFC3339),
+			}
+
+			// The subscription may have got closed due to the client disconnecting.
+			// Hence we do send in a select block with a check for context cancellation.
+			// This avoids goroutine getting blocked forever or panicking,
+			select {
+			case <-ctx.Done(): // This runs when context gets cancelled. Subscription closes.
+				fmt.Println("Subscription Closed")
+				// Handle deregistration of the channel here. `close(ch)`
+				return // Remember to return to end the routine.
+
+			case ch <- t: // This is the actual send.
+				// Our message went through, do nothing
+			}
+		}
+	}()
+
+	// We return the channel and no error.
+	return ch, nil
+}
+
+// LastOrderCreated is the resolver for the lastOrderCreated field.
+func (r *subscriptionResolver) LastOrderCreated(ctx context.Context) (<-chan *model.Order, error) {
+	ctx2 := logging.With(ctx, "nats", "Start")
+	ch := make(chan *model.Order)
+	go func() {
+		// Handle deregistration of the channel here. Note the `defer`
+		// defer close(ch)
+
+		r.NC.Subscribe("order.created", func(m *nats.Msg) {
+			var o model.Order
+			if err := json.Unmarshal(m.Data, &o); err != nil {
+				logging.From(ctx2).Error("failed to unmarshal order", "error", err)
+				return
+			}
+
+			select {
+			// case <-ctx.Done():
+			// 	fmt.Println("Subscription Closed")
+			// 	return
+			case ch <- &o:
+				// ok
+			}
+		})
+	}()
+	return ch, nil
+}
+
+// OrdersByEvent is the resolver for the ordersByEvent field.
+func (r *subscriptionResolver) OrdersByEvent(ctx context.Context, eventID string) (<-chan *model.Order, error) {
+	panic(fmt.Errorf("not implemented: OrdersByEvent - ordersByEvent"))
+}
+
+// OrdersByOrderID is the resolver for the ordersByOrderId field.
+func (r *subscriptionResolver) OrdersByOrderID(ctx context.Context, orderID string) (<-chan *model.Order, error) {
+	panic(fmt.Errorf("not implemented: OrdersByOrderID - ordersByOrderId"))
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Subscription returns SubscriptionResolver implementation.
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

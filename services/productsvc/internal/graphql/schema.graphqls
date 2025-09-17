@@ -1,3 +1,8 @@
+# GraphQL schema definition: This file is used by gqlgen to generate types,
+# resolvers, and models. Run `make graphql` or "go run
+# github.com/99designs/gqlgen generate" to regenerate code after modifying this
+# file.
+
 type Product {
   id: ID!
   price: Int!
@@ -13,14 +18,27 @@ type Order {
   price: Int!
 }
 
+type Time {
+  unixTime: Int!
+  timeStamp: String!
+}
+
+# Root types
+
 type Query {
   productById(productId: ID!): Product
   products: [Product!]!
-  orders: [Order!]!,
+  orders: [Order!]!
   getPrice(productId: ID!): Int!
 }
 
 type Mutation {
   createOrder(productId: ID!, qty: Int!): Order
 }
-  
+
+type Subscription {
+  currentTime: Time!
+  lastOrderCreated: Order!
+  ordersByEvent(eventId: String!): Order!
+  ordersByOrderId(orderId: ID!): Order!
+}

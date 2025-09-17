@@ -4,9 +4,13 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
+	"slices"
+	"time"
 
 	"rxw1/productsvc/internal/cache"
 	"rxw1/productsvc/internal/db"
@@ -14,9 +18,12 @@ import (
 	"rxw1/productsvc/internal/graphql"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/gorilla/websocket"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/redis/go-redis/v9"
@@ -25,8 +32,15 @@ import (
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
+func Into(context context.Context, l *slog.Logger) any {
+	panic("unimplemented")
+}
+
 func main() {
 	ctx := context.Background()
+	log := log.New(os.Stdout, "productsvc ", log.LstdFlags|log.Lshortfile)
+
+	// Logging
 
 	// TODO
 	// buildVersion := "dev" // set via -ldflags "-X main.buildVersion=..."
@@ -80,7 +94,34 @@ func main() {
 
 	// GraphQL
 	res := &graphql.Resolver{PG: pg, NC: nc, RC: rc, FF: ff}
-	srv := handler.NewDefaultServer(graphql.NewExecutableSchema(graphql.Config{Resolvers: res}))
+	srv := handler.New(graphql.NewExecutableSchema(graphql.Config{Resolvers: res}))
+
+	// Websockets
+	srv.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				if origin == "" || origin == r.Header.Get("Host") {
+					return true
+				}
+				allowedOrigins := []string{
+					"http://localhost:3001",
+				}
+				if slices.Contains(allowedOrigins, origin) {
+					fmt.Printf("Allowed origin: %s\n", origin)
+					return true
+				}
+				fmt.Printf("Blocked origin: %s\n", origin)
+				return false
+			},
+		},
+	})
+
+	srv.AddTransport(transport.Options{}) // For the playground
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{}) // Must be after the WebSocket transport
+	srv.Use(extension.Introspection{}) // For running gqlgen
 
 	r := chi.NewRouter()
 
@@ -100,10 +141,3 @@ func main() {
 	log.Println("productsvc up on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
-
-// func getenv(k, def string) string {
-// 	if v := os.Getenv(k); v != "" {
-// 		return v
-// 	}
-// 	return def
-// }

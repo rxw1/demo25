@@ -1,5 +1,7 @@
 COMPOSE_FILE=infra/compose.dev.yml
 
+default: up
+
 .PHONY: dev-up
 up: dev-up
 dev-up:
@@ -60,6 +62,7 @@ uninstall:
 #############################################################################
 
 .PHONY: graphql
+gql: graphql
 graphql:
 	$(MAKE) -C services/productsvc gqlgen
 	$(MAKE) -C services/frontend codegen
