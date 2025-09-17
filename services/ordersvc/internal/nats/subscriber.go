@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"rxw1/ordersvc/internal/logging"
@@ -43,6 +44,8 @@ func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, store *mongo.S
 		}
 
 		logging.From(ctx2).Info("EVENT received order created", "eventId", e.ID, "productId", e.ProductID, "qty", e.Qty, "createdAt", e.CreatedAt)
+
+		time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
 
 		err = store.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
 		if err != nil {

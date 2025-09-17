@@ -8,9 +8,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	rand "math/rand/v2"
+	"time"
+
 	"rxw1/productsvc/internal/logging"
 	"rxw1/productsvc/internal/model"
-	"time"
 
 	nats "github.com/nats-io/nats.go"
 	ulid "github.com/oklog/ulid/v2"
@@ -34,6 +36,8 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 		logging.From(ctx2).Error("failed to marshal event", "error", err)
 		return nil, err
 	}
+
+	time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
 
 	if err := r.NC.Publish("order.created", b); err != nil {
 		logging.From(ctx2).Error("failed to publish event", "error", err)
@@ -210,13 +214,9 @@ func (r *subscriptionResolver) LastOrderCreated(ctx context.Context) (<-chan *mo
 				return
 			}
 
-			select {
-			// case <-ctx.Done():
-			// 	fmt.Println("Subscription Closed")
-			// 	return
-			case ch <- &o:
-				// ok
-			}
+			// Simulate slow consumer with a random delay up to 100ms
+			time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
+			ch <- &o
 		})
 	}()
 	return ch, nil
@@ -241,6 +241,8 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
+type (
+	mutationResolver     struct{ *Resolver }
+	queryResolver        struct{ *Resolver }
+	subscriptionResolver struct{ *Resolver }
+)
