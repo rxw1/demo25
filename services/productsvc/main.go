@@ -8,8 +8,10 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"slices"
+	"strings"
 	"time"
 
 	"rxw1/productsvc/internal/cache"
@@ -104,17 +106,41 @@ func main() {
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
-				if origin == "" || origin == r.Header.Get("Host") {
+				if origin == "" { // no origin header, likely same-origin or non-browser
 					return true
 				}
-				allowedOrigins := []string{
-					"http://localhost:3001",
+
+				// Allowed origins from env (comma-separated). Defaults cover local dev.
+				allowedFromEnv := strings.TrimSpace(os.Getenv("WS_ALLOWED_ORIGINS"))
+				var allowedOrigins []string
+				if allowedFromEnv != "" {
+					parts := strings.Split(allowedFromEnv, ",")
+					for _, p := range parts {
+						p = strings.TrimSpace(p)
+						if p != "" {
+							allowedOrigins = append(allowedOrigins, p)
+						}
+					}
+				} else {
+					allowedOrigins = []string{
+						"http://localhost:3000",
+						"http://localhost:3001",
+					}
 				}
+
+				// Always allow if the Origin host matches the request host (same host/port).
+				if u, err := url.Parse(origin); err == nil {
+					if u.Host == r.Host {
+						fmt.Printf("Allowed same-host origin: %s\n", origin)
+						return true
+					}
+				}
+
 				if slices.Contains(allowedOrigins, origin) {
 					fmt.Printf("Allowed origin: %s\n", origin)
 					return true
 				}
-				fmt.Printf("Blocked origin: %s\n", origin)
+				fmt.Printf("Blocked origin: %s (set WS_ALLOWED_ORIGINS to override)\n", origin)
 				return false
 			},
 		},
