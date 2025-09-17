@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "codegen": "graphql-codegen --config ./graphql/codegen.ts"
+    "codegen": "graphql-codegen --config ./graphql/codegen.ts",
+    "codegen-watch": "graphql-codegen -wvc ./graphql/codegen.ts"
   },
   "dependencies": {
     "@apollo/client": "^4.0.5",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@graphql-codegen/cli": "6.0.0",
     "@graphql-codegen/client-preset": "5.0.0",
+    "@parcel/watcher": "^2.5.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24",
     "@types/react": "^19",

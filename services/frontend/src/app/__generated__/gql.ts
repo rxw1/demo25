@@ -14,18 +14,16 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n": typeof types.FetchProductsDocument,
-    "\n  query FetchProductById($id: ID!) {\n    productById(productId: $id) {\n      id\n      name\n      price\n    }\n  }\n": typeof types.FetchProductByIdDocument,
-    "\n  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.CreateOrderMutationDocument,
+    "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.FetchOrdersDocument,
     "\n  subscription LastOrderCreated {\n    lastOrderCreated {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.LastOrderCreatedDocument,
-    "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n      # price\n    }\n  }\n": typeof types.FetchOrdersDocument,
+    "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n": typeof types.FetchProductsDocument,
+    "\n  mutation CreateOrder($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.CreateOrderDocument,
 };
 const documents: Documents = {
-    "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n": types.FetchProductsDocument,
-    "\n  query FetchProductById($id: ID!) {\n    productById(productId: $id) {\n      id\n      name\n      price\n    }\n  }\n": types.FetchProductByIdDocument,
-    "\n  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.CreateOrderMutationDocument,
+    "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.FetchOrdersDocument,
     "\n  subscription LastOrderCreated {\n    lastOrderCreated {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.LastOrderCreatedDocument,
-    "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n      # price\n    }\n  }\n": types.FetchOrdersDocument,
+    "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n": types.FetchProductsDocument,
+    "\n  mutation CreateOrder($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.CreateOrderDocument,
 };
 
 /**
@@ -45,15 +43,7 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n"): (typeof documents)["\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query FetchProductById($id: ID!) {\n    productById(productId: $id) {\n      id\n      name\n      price\n    }\n  }\n"): (typeof documents)["\n  query FetchProductById($id: ID!) {\n    productById(productId: $id) {\n      id\n      name\n      price\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"];
+export function graphql(source: "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -61,7 +51,11 @@ export function graphql(source: "\n  subscription LastOrderCreated {\n    lastOr
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n      # price\n    }\n  }\n"): (typeof documents)["\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n      # price\n    }\n  }\n"];
+export function graphql(source: "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n"): (typeof documents)["\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateOrder($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  mutation CreateOrder($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

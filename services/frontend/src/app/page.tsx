@@ -3,23 +3,25 @@ import {
   ApolloClient,
   ApolloLink,
   HttpLink,
-  InMemoryCache,
-  gql,
-} from "@apollo/client"
-import { GraphQLWsLink } from "@apollo/client/link/subscriptions"
-import { ApolloProvider, useMutation, useQuery } from "@apollo/client/react"
-import { getMainDefinition } from "@apollo/client/utilities"
-import { OperationTypeNode } from "graphql"
-import { createClient } from "graphql-ws"
-import Comp1 from "./components/comp1"
+  InMemoryCache
+} from "@apollo/client";
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { ApolloProvider } from "@apollo/client/react";
+import { OperationTypeNode } from "graphql";
+import { createClient } from "graphql-ws";
+import Comp1 from "./components/comp1";
+
+export const graphQLEndpoint =
+  process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:8080/graphql"
+const wsUrl = graphQLEndpoint.replace(/^http/, "ws")
 
 const httpLink = new HttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:8080/graphql",
+  uri: graphQLEndpoint,
 })
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: "ws://localhost:8080/graphql",
+    url: wsUrl,
   })
 )
 

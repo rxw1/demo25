@@ -1,5 +1,6 @@
-import { gql } from "@apollo/client"
-import { useQuery } from "@apollo/client/react"
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
+import { FetchOrdersDocument, Order } from "../__generated__/graphql";
 
 const Q = gql`
   query FetchOrders {
@@ -8,28 +9,19 @@ const Q = gql`
       productId
       qty
       createdAt
-      # price
     }
   }
 `
 
-type Order = {
-  id: string
-  productId: string
-  qty: number
-  createdAt: string
-  // price: number
-}
-
-type Orders = {
+type Data = {
   orders: Order[]
 }
 
-export default function Products() {
-  const { data } = useQuery<Orders>(Q, {})
+export default function Products({}) {
+  const { data } = useQuery<Data>(FetchOrdersDocument, {})
 
   return (
-    <div style={{ width: 480 }}>
+    <div style={{ width: "var(--width)" }}>
       <h3>Orders ({data?.orders.length})</h3>
       {data?.orders.map((p) => (
         <div
@@ -43,7 +35,6 @@ export default function Products() {
           <div>{p.productId.slice(9, 14)}</div>
           <div>{p.qty}</div>
           <div>{new Date(p.createdAt).toLocaleString()}</div>
-          {/* <div>Price: {p.price}</div> */}
         </div>
       ))}
     </div>

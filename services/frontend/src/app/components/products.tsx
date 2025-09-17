@@ -1,6 +1,13 @@
 import { gql } from "@apollo/client"
 import { useMutation, useQuery } from "@apollo/client/react"
-import { Hahmlet } from "next/font/google"
+import {
+  CreateOrderDocument,
+  CreateOrderMutation,
+  CreateOrderMutationVariables,
+  FetchProductsDocument,
+  FetchProductsQuery,
+} from "../__generated__/graphql"
+import ProductComponent from "./product"
 
 const Q = gql`
   query FetchProducts {
@@ -13,7 +20,7 @@ const Q = gql`
 `
 
 const M = gql`
-  mutation CreateOrderMutation($productId: ID!, $qty: Int!) {
+  mutation CreateOrder($productId: ID!, $qty: Int!) {
     createOrder(productId: $productId, qty: $qty) {
       id
       productId
@@ -23,28 +30,12 @@ const M = gql`
   }
 `
 
-type Product = {
-  id: string
-  name: string
-  price: number
-}
-
-type Products = {
-  products: Product[]
-}
-
-type OrderResult = {
-  createOrder: {
-    id: string
-    productId: string
-    qty: number
-    createdAt: string
-  }
-}
-
 export default function Products() {
-  const { data } = useQuery<Products>(Q, {})
-  const [createOrder] = useMutation<OrderResult>(M)
+  const { data, loading } = useQuery<FetchProductsQuery>(FetchProductsDocument)
+  const [createOrder] = useMutation<
+    CreateOrderMutation,
+    CreateOrderMutationVariables
+  >(CreateOrderDocument)
 
   function handleOrder(productId: string, price: number, qty: number) {
     createOrder({ variables: { productId, qty } })
@@ -58,37 +49,16 @@ export default function Products() {
 
   return (
     <div>
-      <h3>Products</h3>
+      <h4>Products</h4>
       <div
         style={{
-          width: 480,
+          width: "var(--width)",
         }}
       >
-        {data?.products.map((p) => (
-          <div
-            key={p.id}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr auto auto",
-              gap: 10,
-            }}
-          >
-            <div>{p.id.slice(9, 14)}</div>
-            <div>{p.name}</div>
-            <div>${p.price}</div>
-            <button
-              onClick={(e) => {
-                const input = e.currentTarget
-                  .nextElementSibling as HTMLInputElement | null
-                const qty = input ? parseInt(input.value || "0", 10) : 1
-                handleOrder(p.id, p.price, qty)
-              }}
-            >
-              ORDER
-            </button>
-            <input type="number" defaultValue={1} style={{ width: 40 }} />
-          </div>
-        ))}
+        {!loading &&
+          data?.products.map((p) => (
+            <ProductComponent key={p.id} product={p} onOrder={handleOrder} />
+          ))}
       </div>
     </div>
   )
