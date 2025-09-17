@@ -80,3 +80,9 @@ lint:
 tests:
 	cd tests/e2e && go test -v
 
+#############################################################################
+
+.PHONY: frontend
+frontend:
+	cd services/frontend && npm run dev
+

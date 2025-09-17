@@ -43,6 +43,12 @@
         services/ordersvc/Makefile
         services/productsvc/Makefile
 
+### Frontend Dev
+
+In `services/frontend` run
+- `npm run dev` and
+- `npm run codegen-watch`
+
 ## Infrastructure
 
 - General configuration lives in `infra` (see `infra/Makefile`), specific package configuration lives in the package directory, e.g. `services/productsvc/Dockerfile` or `services/productsvc/chart` for Helm charts.

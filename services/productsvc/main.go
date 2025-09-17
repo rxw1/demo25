@@ -32,8 +32,10 @@ import (
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
-func Into(context context.Context, l *slog.Logger) any {
-	panic("unimplemented")
+type ctxKey struct{}
+
+func Into(ctx context.Context, l *slog.Logger) context.Context {
+	return context.WithValue(ctx, ctxKey{}, l)
 }
 
 func main() {
