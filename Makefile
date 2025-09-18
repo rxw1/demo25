@@ -1,11 +1,22 @@
+SHELL=/bin/zsh
+
+GIT_TAG=$(shell git describe --tags --abbrev=0)
+GIT_COMMIT=$(shell git rev-parse --short HEAD)
+FRONTEND_VERSION=$(shell jq .version < services/frontend/package.json)
+VERSION="$(GIT_TAG)-$(GIT_COMMIT)"
+
+#############################################################################
+
 COMPOSE_FILE=infra/compose.dev.yml
 
 default: up
 
+#COMPOSE_PLAIN=--progress plain
+
 .PHONY: dev-up
 up: dev-up
 dev-up:
-	COMPOSE_BAKE=true docker compose -f $(COMPOSE_FILE) up -d --build
+	BUILD_VERSION=$(VERSION) COMPOSE_BAKE=true docker compose $(COMPOSE_PLAIN) -f $(COMPOSE_FILE) up --detach --build
 
 .PHONY: dev-down
 down: dev-down

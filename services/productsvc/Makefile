@@ -54,3 +54,6 @@ clean:
 	$(RM) internal/graphql/generated.go
 	$(RM) internal/model/models_gen.go
 
+.PHONY: name
+name:
+	@awk -F/ 'NR==1{print $$NF}' < go.mod

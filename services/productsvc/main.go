@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"runtime/debug"
 	"slices"
 	"strings"
 	"time"
@@ -41,7 +40,7 @@ func main() {
 		JSON:        getenv("LOG_FORMAT", "json") == "false",
 		AddSource:   getenv("LOG_SOURCE", "true") == "false",
 		Service:     "productsvc",
-		Version:     buildVersion,
+		Version:     getenv("BUILD_VERSION", "dev"),
 		Environment: getenv("ENV", "dev"),
 		SetDefault:  true,
 	})

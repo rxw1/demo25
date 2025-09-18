@@ -55,3 +55,7 @@ codegen-watch:
 
 .PHONY: mrproper
 	$(RM) -R node_modules
+
+.PHONY: name
+name:
+	@jq -r '.name' < package.json

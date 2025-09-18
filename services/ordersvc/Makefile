@@ -44,3 +44,6 @@ test-dns:
 
 ###
 
+.PHONY: name
+name:
+	@awk -F/ 'NR==1{print $$NF}' < go.mod
