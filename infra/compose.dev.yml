@@ -5,7 +5,7 @@ services:
     ports: ["4222:4222", "8222:8222"]
 
   postgres:
-    image: bitnami/postgresql:17
+    image: bitnamisecure/postgresql:latest
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRESQL_USERNAME=app
@@ -14,11 +14,11 @@ services:
     ports: ["5432:5432"]
 
   mongo:
-    image: bitnami/mongodb:latest
+    image: bitnamisecure/mongodb:latest
     ports: ["27017:27017"]
 
   redis:
-    image: bitnami/redis:latest
+    image: bitnamisecure/redis:latest
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     ports: ["6379:6379"]
