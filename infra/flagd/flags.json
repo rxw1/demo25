@@ -8,6 +8,14 @@
         "on": true,
         "off": false
       }
+    },
+    "throttleEnabled": {
+      "state": "ENABLED",
+      "defaultVariant": "off",
+      "variants": {
+        "on": true,
+        "off": false
+      }
     }
   }
 }

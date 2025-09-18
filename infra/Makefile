@@ -31,6 +31,8 @@ uninstall:
 lint:
 	helm lint flagd/chart
 
+# Test flags.json for correctness and push content to configmap
 .PHONY: flags
 flags:
-	yq flagd/chart/templates/configmap-flags.yaml | yq '.data["flags.json"]' | jq . > flagd/flags.json
+	jq -e . flagd/flags.json > /dev/null
+	yq -i '.data["flags.json"] |= (load_str("flagd/flags.json") | . style="literal")' flagd/chart/templates/configmap-flags.yaml
