@@ -76,6 +76,8 @@ func main() {
 	}
 	defer nc.Drain()
 
+	// Subscribers
+
 	sub, err := mynats.SubscribeToOrdersCreated(ctx, nc, store)
 	if err != nil {
 		log.Fatal(err)
@@ -91,20 +93,6 @@ func main() {
 	// Chi
 	r := chi.NewRouter()
 	r.Use(Logging)
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := logging.With(r.Context(), "user_id", 789234) // TODO
-			logging.From(ctx).Error("db query failed", "err", err)
-
-			// TODO
-			if r.URL.Path == "/healthz" {
-				w.WriteHeader(200)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	})
-
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
 
 	// Start server

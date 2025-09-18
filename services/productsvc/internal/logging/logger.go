@@ -1,10 +1,3 @@
-// Package logging provides an opinionated, stdlib-first setup for slog.
-// Goals:
-//   - App decides formatting/output; libraries accept *slog.Logger or slog.Handler.
-//   - Single initialization point, no hidden globals (optionally set slog default).
-//   - Context-friendly helpers and request-scoped fields.
-//   - ReplaceAttr hook for redaction and consistent field names.
-//   - Reasonable dev (text) vs prod (JSON) defaults.
 package logging
 
 import (
@@ -14,10 +7,8 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-	"time"
 )
 
-// Config controls logger construction. Keep it small and boring.
 type Config struct {
 	// Level: "debug", "info", "warn", "error" (case-insensitive).
 	Level string
@@ -120,9 +111,9 @@ func isSensitiveKey(k string) bool {
 }
 
 // Context wiring
-//
 // Prefer passing *slog.Logger explicitly. When that’s noisy (eg HTTP handlers),
-// use context to carry a request-scoped child logger. These helpers keep it tidy.
+// use context to carry a request-scoped child logger. These helpers keep it
+// tidy.
 
 type ctxKey struct{}
 
@@ -145,71 +136,3 @@ func From(ctx context.Context) *slog.Logger {
 func With(ctx context.Context, attrs ...any) context.Context {
 	return Into(ctx, From(ctx).With(attrs...))
 }
-
-// Example: HTTP middleware sketch (framework-agnostic)
-//
-// func Logging(next http.Handler) http.Handler {
-//     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//         start := time.Now()
-//         // In real code, wrap ResponseWriter to capture status/bytes.
-//         reqID := r.Header.Get("X-Request-ID")
-//
-//         l := slog.Default().With(
-//             "trace_id", reqID,
-//             "remote_ip", r.RemoteAddr,
-//             "method", r.Method,
-//             "path", r.URL.Path,
-//         )
-//         ctx := Into(r.Context(), l)
-//         r = r.WithContext(ctx)
-//
-//         // call next
-//         next.ServeHTTP(w, r)
-//
-//         l.Info("request complete", "duration_ms", time.Since(start).Milliseconds())
-//     })
-// }
-
-// Example: timed helper for ad-hoc spans.
-func Timed(ctx context.Context, msg string, attrs ...any) func(extra ...any) {
-	l := From(ctx)
-	start := time.Now()
-	l.Debug("start: "+msg, attrs...)
-	return func(extra ...any) {
-		elapsed := time.Since(start)
-		all := append(attrs, append(extra, "duration", elapsed)...) // safe: odd/even OK in slog
-		l.Info(msg, all...)
-	}
-}
-
-// ------- USAGE (in your app main) -------
-//
-// func main() {
-//     cfg := logging.Config{
-//         Level:       getenv("LOG_LEVEL", "info"),
-//         JSON:        getenv("LOG_FORMAT", "json") == "json",
-//         AddSource:   getenv("LOG_SOURCE", "false") == "true",
-//         Service:     "payments-api",
-//         Version:     buildVersion,
-//         Environment: getenv("ENV", "dev"),
-//         SetDefault:  true, // so slog.Default() works across the app
-//     }
-//     logger, err := logging.New(cfg)
-//     if err != nil { panic(err) }
-//
-//     logger.Info("boot", "pid", os.Getpid())
-//
-//     // Later in handlers:
-//     // func h(w http.ResponseWriter, r *http.Request) {
-//     //     ctx := logging.With(r.Context(), "user_id", uid)
-//     //     logging.From(ctx).Error("db query failed", "err", err)
-//     // }
-// }
-
-// tiny getenv helper for the usage sketch
-// func getenv(k, def string) string {
-// 	if v := os.Getenv(k); v != "" {
-// 		return v
-// 	}
-// 	return def
-// }

@@ -48,5 +48,9 @@ graphql: codegen
 codegen:
 	npm run codegen
 
+.PHONY: codegen-watch
+codegen-watch:
+	npm run codegen-watch
+
 .PHONY: mrproper
 	$(RM) -R node_modules

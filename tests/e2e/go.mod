@@ -3,6 +3,7 @@ module e2e
 go 1.24.0
 
 require (
+	github.com/gorilla/websocket v1.5.3
 	github.com/machinebox/graphql v0.2.2
 	go.mongodb.org/mongo-driver v1.17.4
 )

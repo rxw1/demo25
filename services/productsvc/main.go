@@ -18,6 +18,8 @@ import (
 	"rxw1/productsvc/internal/db"
 	"rxw1/productsvc/internal/flags"
 	"rxw1/productsvc/internal/graphql"
+	"rxw1/productsvc/internal/logging"
+	"rxw1/productsvc/internal/natsx"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -44,27 +46,24 @@ func main() {
 	ctx := context.Background()
 	log := log.New(os.Stdout, "productsvc ", log.LstdFlags|log.Lshortfile)
 
-	// Logging
+	buildVersion := "dev" // set via -ldflags "-X main.buildVersion=..."
 
-	// TODO
-	// buildVersion := "dev" // set via -ldflags "-X main.buildVersion=..."
+	cfg := logging.Config{
+		Level:       getenv("LOG_LEVEL", "debug"),
+		JSON:        getenv("LOG_FORMAT", "json") == "json",
+		AddSource:   getenv("LOG_SOURCE", "true") == "true",
+		Service:     "productsvc",
+		Version:     buildVersion,
+		Environment: getenv("ENV", "dev"),
+		SetDefault:  true, // so slog.Default() works across the app
+	}
 
-	// cfg := logging.Config{
-	// 	Level:       getenv("LOG_LEVEL", "debug"),
-	// 	JSON:        getenv("LOG_FORMAT", "json") == "json",
-	// 	AddSource:   getenv("LOG_SOURCE", "true") == "true",
-	// 	Service:     "productsvc",
-	// 	Version:     buildVersion,
-	// 	Environment: getenv("ENV", "dev"),
-	// 	SetDefault:  true, // so slog.Default() works across the app
-	// }
+	logger, err := logging.New(cfg)
+	if err != nil {
+		panic(err)
+	}
 
-	// logger, err := logging.New(cfg)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// logger.Info("boot", "pid", os.Getpid())
+	logger.Info("boot", "pid", os.Getpid())
 
 	// Postgres
 	pg, err := db.Connect(ctx, os.Getenv("DATABASE_URL"))
@@ -168,4 +167,11 @@ func main() {
 
 	log.Println("productsvc up on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
+}
+
+func getenv(k, def string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
+	return def
 }
