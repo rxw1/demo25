@@ -6,10 +6,10 @@ import (
 	"embed"
 	"fmt"
 	"log"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"time"
@@ -19,7 +19,6 @@ import (
 	"rxw1/productsvc/internal/flags"
 	"rxw1/productsvc/internal/graphql"
 	"rxw1/productsvc/internal/logging"
-	"rxw1/productsvc/internal/natsx"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -36,32 +35,32 @@ import (
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
-type ctxKey struct{}
-
-func Into(ctx context.Context, l *slog.Logger) context.Context {
-	return context.WithValue(ctx, ctxKey{}, l)
-}
-
 func main() {
-	ctx := context.Background()
-	log := log.New(os.Stdout, "productsvc ", log.LstdFlags|log.Lshortfile)
-
 	buildVersion := "dev" // set via -ldflags "-X main.buildVersion=..."
 
-	cfg := logging.Config{
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, s := range info.Settings {
+			if s.Key == "vcs.revision" {
+				buildVersion = s.Value
+				break
+			}
+		}
+	}
+
+	logger, err := logging.New(logging.Config{
 		Level:       getenv("LOG_LEVEL", "debug"),
-		JSON:        getenv("LOG_FORMAT", "json") == "json",
-		AddSource:   getenv("LOG_SOURCE", "true") == "true",
+		JSON:        getenv("LOG_FORMAT", "json") == "false",
+		AddSource:   getenv("LOG_SOURCE", "true") == "false",
 		Service:     "productsvc",
 		Version:     buildVersion,
 		Environment: getenv("ENV", "dev"),
-		SetDefault:  true, // so slog.Default() works across the app
+		SetDefault:  true,
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	logger, err := logging.New(cfg)
-	if err != nil {
-		panic(err)
-	}
+	ctx := logging.Into(context.Background(), logger)
 
 	logger.Info("boot", "pid", os.Getpid())
 
@@ -96,7 +95,7 @@ func main() {
 	ff := flags.New()
 
 	// GraphQL
-	res := &graphql.Resolver{PG: pg, NC: natsx.New(nc), RC: rc, FF: ff}
+	res := &graphql.Resolver{PG: pg, NC: nc, RC: rc, FF: ff}
 	srv := handler.New(graphql.NewExecutableSchema(graphql.Config{Resolvers: res}))
 
 	// Websockets

@@ -10,23 +10,16 @@ import (
 )
 
 type Config struct {
-	// Level: "debug", "info", "warn", "error" (case-insensitive).
-	Level string
-	// JSON forces JSON output; if false, a human-friendly text handler is used.
-	JSON bool
-	// AddSource includes file:line. Useful in dev; costly in hot paths.
-	AddSource bool
-	// Writer selects the destination (defaults to os.Stdout).
-	Writer io.Writer
-	// Service metadata you may want on every log line.
+	Level       string
+	JSON        bool
+	AddSource   bool
+	Writer      io.Writer
 	Service     string
 	Version     string
-	Environment string // e.g., dev, staging, prod
-	// SetDefault also sets slog.SetDefault(logger) for packages using slog.Default().
-	SetDefault bool
+	Environment string
+	SetDefault  bool
 }
 
-// New constructs a *slog.Logger from Config. It never panics.
 func New(cfg Config) (*slog.Logger, error) {
 	lvl, err := parseLevel(cfg.Level)
 	if err != nil {
@@ -41,17 +34,13 @@ func New(cfg Config) (*slog.Logger, error) {
 		Level:     lvl,
 		AddSource: cfg.AddSource,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			// Normalize level key and redact known sensitive keys.
-			// You can expand this list to fit your domain.
 			key := a.Key
 			if key == slog.LevelKey {
-				// Emit level as lowercase string for consistency.
 				if v, ok := a.Value.Any().(slog.Level); ok {
 					return slog.Attr{Key: "level", Value: slog.StringValue(v.String())}
 				}
 				return slog.Attr{Key: "level", Value: slog.StringValue(strings.ToLower(a.Value.String()))}
 			}
-			// Redact secrets by key name heuristics.
 			if isSensitiveKey(key) {
 				return slog.Attr{Key: key, Value: slog.StringValue("[REDACTED]")}
 			}
@@ -67,7 +56,6 @@ func New(cfg Config) (*slog.Logger, error) {
 	}
 
 	base := slog.New(handler)
-	// Attach stable, always-on attributes.
 	if cfg.Service != "" || cfg.Version != "" || cfg.Environment != "" {
 		base = base.With(
 			slog.String("service", cfg.Service),
@@ -82,7 +70,6 @@ func New(cfg Config) (*slog.Logger, error) {
 	return base, nil
 }
 
-// parseLevel accepts common strings; default is Info.
 func parseLevel(s string) (slog.Leveler, error) {
 	s = strings.ToLower(strings.TrimSpace(s))
 	switch s {

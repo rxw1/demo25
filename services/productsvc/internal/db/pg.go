@@ -19,16 +19,18 @@ type PG struct {
 }
 
 func Connect(ctx context.Context, url string) (*PG, error) {
-	ctx2 := logging.With(ctx)
-	logging.From(ctx2).Info("pg connect", "url", url)
+	logging.From(ctx).Info("pg connect", "url", url)
+
+	// ctx2 := logging.With(ctx)
+	logging.From(ctx).Info("pg connect", "url", url)
 
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
-		logging.From(ctx2).Error("pg connect", "err", err)
+		logging.From(ctx).Error("pg connect", "err", err)
 		return nil, err
 	}
 
-	logging.From(ctx2).Info("pg connect", "status", "success")
+	logging.From(ctx).Info("pg connect", "status", "success")
 	return &PG{Pool: pool}, nil
 }
 
