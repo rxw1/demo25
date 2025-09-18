@@ -47,9 +47,12 @@ services:
     build: ../services/ordersvc
     restart: always
     environment:
+      - FLAGD_HOST=flagd
+      - FLAGD_PORT=8013
+      - LOG_LEVEL=debug
       - MONGO_URI=mongodb://mongo:27017
       - NATS_URL=nats://nats:4222
-    depends_on: [mongo, nats]
+    depends_on: [mongo, nats, flagd]
     ports: ["8081:8081"]
 
   frontend:
