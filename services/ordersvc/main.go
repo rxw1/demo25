@@ -64,7 +64,9 @@ func main() {
 
 	// logger.Info("boot", "pid", os.Getpid())
 
-	// Mongo
+	// Flags
+	ctx = context.WithValue(ctx, "flags", flags.New())
+
 	store, err := mongo.Connect(ctx, os.Getenv("MONGO_URI"))
 	if err != nil {
 		log.Fatal(err)
@@ -78,7 +80,6 @@ func main() {
 	defer nc.Drain()
 
 	// Subscribers
-
 	sub, err := mynats.SubscribeToOrdersCreated(ctx, nc, store)
 	if err != nil {
 		log.Fatal(err)

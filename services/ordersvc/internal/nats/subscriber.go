@@ -46,7 +46,19 @@ func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, store *mongo.S
 
 		logging.From(ctx2).Info("EVENT received order created", "eventId", e.ID, "productId", e.ProductID, "qty", e.Qty, "createdAt", e.CreatedAt)
 
-		time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
+		if ctx.Value("flags") == nil {
+			logging.From(ctx2).Error("flags not found in context")
+			return
+		}
+		flags, ok := ctx.Value("flags").(*flags.Flags)
+		if !ok {
+			logging.From(ctx2).Error("flags has wrong type in context")
+			return
+		}
+		if flags.ThrottleEnabled(ctx) {
+			logging.From(ctx2).Info("throttling enabled, sleeping")
+			time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
+		}
 
 		err = store.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
 		if err != nil {

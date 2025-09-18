@@ -97,3 +97,6 @@ tests:
 frontend:
 	cd services/frontend && npm run dev
 
+.PHONY: logs
+logs:
+	docker compose -f infra/compose.dev.yml logs -fn10 {product,order}svc

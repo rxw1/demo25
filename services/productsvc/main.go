@@ -43,6 +43,7 @@ func main() {
 		Version:     getenv("BUILD_VERSION", "dev"),
 		Environment: getenv("ENV", "dev"),
 		SetDefault:  true,
+		TimeFormat:  time.Kitchen,
 	})
 	if err != nil {
 		log.Fatal(err)
