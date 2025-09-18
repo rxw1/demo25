@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"rxw1/ordersvc/internal/logging"
+	"rxw1/logging"
 
 	"github.com/oklog/ulid/v2"
 	"go.mongodb.org/mongo-driver/bson"

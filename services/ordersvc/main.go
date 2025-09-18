@@ -8,7 +8,8 @@ import (
 	"os"
 	"time"
 
-	"rxw1/ordersvc/internal/logging"
+	"rxw1/logging"
+	"rxw1/ordersvc/internal/flags"
 	"rxw1/ordersvc/internal/mongo"
 	mynats "rxw1/ordersvc/internal/nats"
 

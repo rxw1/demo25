@@ -1,4 +1,6 @@
+
 services:
+
   nats:
     image: nats:2.10-alpine
     ports: ["4222:4222", "8222:8222"]
@@ -30,7 +32,9 @@ services:
     ports: ["8013:8013"]
 
   productsvc:
-    build: ../services/productsvc
+    build:
+      context: ..
+      dockerfile: services/productsvc/Dockerfile
     restart: always
     environment:
       - AUTO_MIGRATE=true
@@ -40,11 +44,14 @@ services:
       - LOG_LEVEL=debug
       - NATS_URL=nats://nats:4222
       - REDIS_ADDR=redis:6379
+      - BUILD_VERSION=${BUILD_VERSION:-dev}
     depends_on: [postgres, redis, nats, flagd]
     ports: ["8080:8080"]
 
   ordersvc:
-    build: ../services/ordersvc
+    build:
+      context: ..
+      dockerfile: services/ordersvc/Dockerfile
     restart: always
     environment:
       - FLAGD_HOST=flagd

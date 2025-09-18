@@ -3,7 +3,7 @@ package flags
 import (
 	"context"
 
-	"rxw1/productsvc/internal/logging"
+	"rxw1/logging"
 
 	of "github.com/open-feature/go-sdk/openfeature"
 )

@@ -8,7 +8,7 @@ import (
 	"embed"
 	"fmt"
 
-	"rxw1/productsvc/internal/logging"
+	"rxw1/logging"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"

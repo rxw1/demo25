@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"rxw1/productsvc/internal/logging"
+	"rxw1/logging"
 
 	"github.com/redis/go-redis/v9"
 )

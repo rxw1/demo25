@@ -14,11 +14,11 @@ import (
 	"strings"
 	"time"
 
+	"rxw1/logging"
 	"rxw1/productsvc/internal/cache"
 	"rxw1/productsvc/internal/db"
 	"rxw1/productsvc/internal/flags"
 	"rxw1/productsvc/internal/graphql"
-	"rxw1/productsvc/internal/logging"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -36,18 +36,7 @@ import (
 var migrationsFS embed.FS
 
 func main() {
-	buildVersion := "dev" // set via -ldflags "-X main.buildVersion=..."
-
-	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, s := range info.Settings {
-			if s.Key == "vcs.revision" {
-				buildVersion = s.Value
-				break
-			}
-		}
-	}
-
-	logger, err := logging.New(logging.Config{
+	logger, err := logging.NewTint(logging.Config{
 		Level:       getenv("LOG_LEVEL", "debug"),
 		JSON:        getenv("LOG_FORMAT", "json") == "false",
 		AddSource:   getenv("LOG_SOURCE", "true") == "false",

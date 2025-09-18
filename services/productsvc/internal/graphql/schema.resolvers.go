@@ -11,7 +11,8 @@ import (
 	rand "math/rand/v2"
 	"time"
 
-	"rxw1/productsvc/internal/logging"
+	"rxw1/logging"
+
 	"rxw1/productsvc/internal/model"
 
 	nats "github.com/nats-io/nats.go"

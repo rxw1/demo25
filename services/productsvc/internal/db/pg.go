@@ -7,7 +7,7 @@ package db
 import (
 	"context"
 
-	"rxw1/productsvc/internal/logging"
+	"rxw1/logging"
 	"rxw1/productsvc/internal/model"
 
 	"github.com/jackc/pgx/v5"
