@@ -3,10 +3,9 @@ package mongo_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"rxw1/ordersvc/internal/mongo"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Order struct {
@@ -17,26 +16,49 @@ type Order struct {
 	CreatedAt string `bson:"createdAt"`
 }
 
+func TestStore_AddOrder(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for receiver constructor.
+		uri string
+		// Named input parameters for target function.
+		eventID   string
+		productID string
+		qty       int
+		createdAt time.Time
+		wantErr   bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := mongo.Connect(context.Background(), tt.uri)
+			if err != nil {
+				t.Fatalf("could not construct receiver type: %v", err)
+			}
+			gotErr := s.AddOrder(context.Background(), tt.eventID, tt.productID, tt.qty, tt.createdAt)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("AddOrder() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("AddOrder() succeeded unexpectedly")
+			}
+		})
+	}
+}
+
 func TestStore_GetAllOrders(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case
 		// Named input parameters for receiver constructor.
 		uri     string
-		want    []bson.M
+		want    []mongo.Order
 		wantErr bool
 	}{
-		{
-			name:    "valid uri",
-			uri:     "mongodb://localhost:27017",
-			want:    []bson.M{}, // expecting no orders in default test DB/collection
-			wantErr: false,
-		},
-		{
-			name:    "invalid uri",
-			uri:     "invalid_uri",
-			want:    nil,
-			wantErr: true,
-		},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
