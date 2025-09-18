@@ -97,7 +97,7 @@ func main() {
 	ff := flags.New()
 
 	// GraphQL
-	res := &graphql.Resolver{PG: pg, NC: nc, RC: rc, FF: ff}
+	res := &graphql.Resolver{PG: pg, NC: natsx.New(nc), RC: rc, FF: ff}
 	srv := handler.New(graphql.NewExecutableSchema(graphql.Config{Resolvers: res}))
 
 	// Websockets

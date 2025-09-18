@@ -4,8 +4,7 @@ import (
 	"rxw1/productsvc/internal/cache"
 	"rxw1/productsvc/internal/db"
 	"rxw1/productsvc/internal/flags"
-
-	"github.com/nats-io/nats.go"
+	"rxw1/productsvc/internal/natsx"
 )
 
 // This file will not be regenerated automatically. It serves as dependency
@@ -13,7 +12,7 @@ import (
 
 type Resolver struct {
 	PG *db.PG
-	NC *nats.Conn
+	NC natsx.Client
 	RC *cache.Cache
 	FF *flags.Flags
 }
