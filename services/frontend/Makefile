@@ -3,7 +3,8 @@ CLUSTER_NAME=poc
 NAMESPACE=app
 CHART=./chart
 
-ok:
+dev:
+	npm run dev
 
 .PHONY: build
 build:
