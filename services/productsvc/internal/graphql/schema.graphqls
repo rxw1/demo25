@@ -34,11 +34,13 @@ type Query {
 
 type Mutation {
   createOrder(productId: ID!, qty: Int!): Order
+  cancelOrder(orderId: ID!): Order
 }
 
 type Subscription {
-  currentTime: Time!
+  myOrders: Order!
   lastOrderCreated: Order!
   ordersByEvent(eventId: String!): Order!
   ordersByOrderId(orderId: ID!): Order!
+  ordersByProductId(productId: ID!): Order!
 }

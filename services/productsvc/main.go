@@ -37,8 +37,8 @@ var migrationsFS embed.FS
 func main() {
 	logger, err := logging.NewTint(logging.Config{
 		Level:       getenv("LOG_LEVEL", "debug"),
-		JSON:        getenv("LOG_FORMAT", "json") == "false",
-		AddSource:   getenv("LOG_SOURCE", "true") == "false",
+		JSON:        getenv("LOG_FORMAT", "json") == "json",
+		AddSource:   getenv("LOG_SOURCE", "true") == "true",
 		Service:     "productsvc",
 		Version:     getenv("BUILD_VERSION", "dev"),
 		Environment: getenv("ENV", "dev"),

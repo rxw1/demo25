@@ -8,7 +8,6 @@ services:
   postgres:
     image: bitnamisecure/postgresql:latest
     environment:
-      - POSTGRES_PASSWORD=postgres
       - POSTGRESQL_USERNAME=app
       - POSTGRESQL_PASSWORD=app
       - POSTGRESQL_DATABASE=app
