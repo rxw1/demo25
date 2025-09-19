@@ -3,6 +3,11 @@
 # github.com/99designs/gqlgen generate" to regenerate code after modifying this
 # file.
 
+type User {
+  id: ID!
+  name: String!
+}
+
 type Product {
   id: ID!
   price: Int!
@@ -23,24 +28,30 @@ type Time {
   timeStamp: String!
 }
 
-# Root types
-
 type Query {
+  currentTime: Time!
+  getPrice(productId: ID!): Int!
+  isCacheEnabled: Boolean!
+  isThrottlingEnabled: Boolean!
+  orders: [Order!]!
+  ordersByUserId(userId: ID!): [Order!]!
+  orderById(orderId: ID!): Order
   productById(productId: ID!): Product
   products: [Product!]!
-  orders: [Order!]!
-  getPrice(productId: ID!): Int!
+  userById(userId: ID!): User
+  users: [User!]!
 }
 
 type Mutation {
-  createOrder(productId: ID!, qty: Int!): Order
   cancelOrder(orderId: ID!): Order
+  clearCache: Boolean!
+  createOrder(productId: ID!, qty: Int!): Order
+  disableCache: Boolean!
+  disableThrottling: Boolean!
+  enableCache: Boolean!
+  enableThrottling: Boolean!
 }
 
 type Subscription {
-  myOrders: Order!
   lastOrderCreated: Order!
-  ordersByEvent(eventId: String!): Order!
-  ordersByOrderId(orderId: ID!): Order!
-  ordersByProductId(productId: ID!): Order!
 }

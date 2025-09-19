@@ -17,6 +17,16 @@ import (
 	ulid "github.com/oklog/ulid/v2"
 )
 
+// CancelOrder is the resolver for the cancelOrder field.
+func (r *mutationResolver) CancelOrder(ctx context.Context, orderID string) (*model.Order, error) {
+	panic(fmt.Errorf("not implemented: CancelOrder - cancelOrder"))
+}
+
+// ClearCache is the resolver for the clearCache field.
+func (r *mutationResolver) ClearCache(ctx context.Context) (bool, error) {
+	panic(fmt.Errorf("not implemented: ClearCache - clearCache"))
+}
+
 // CreateOrder is the resolver for the createOrder field.
 func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qty int32) (*model.Order, error) {
 	ctx = logging.With(ctx, "productID", productID)
@@ -55,9 +65,92 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 	return order, nil
 }
 
-// CancelOrder is the resolver for the cancelOrder field.
-func (r *mutationResolver) CancelOrder(ctx context.Context, orderID string) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: CancelOrder - cancelOrder"))
+// DisableCache is the resolver for the disableCache field.
+func (r *mutationResolver) DisableCache(ctx context.Context) (bool, error) {
+	panic(fmt.Errorf("not implemented: DisableCache - disableCache"))
+}
+
+// DisableThrottling is the resolver for the disableThrottling field.
+func (r *mutationResolver) DisableThrottling(ctx context.Context) (bool, error) {
+	panic(fmt.Errorf("not implemented: DisableThrottling - disableThrottling"))
+}
+
+// EnableCache is the resolver for the enableCache field.
+func (r *mutationResolver) EnableCache(ctx context.Context) (bool, error) {
+	panic(fmt.Errorf("not implemented: EnableCache - enableCache"))
+}
+
+// EnableThrottling is the resolver for the enableThrottling field.
+func (r *mutationResolver) EnableThrottling(ctx context.Context) (bool, error) {
+	panic(fmt.Errorf("not implemented: EnableThrottling - enableThrottling"))
+}
+
+// CurrentTime is the resolver for the currentTime field.
+func (r *queryResolver) CurrentTime(ctx context.Context) (*model.Time, error) {
+	panic(fmt.Errorf("not implemented: CurrentTime - currentTime"))
+}
+
+// GetPrice is the resolver for the getPrice field.
+func (r *queryResolver) GetPrice(ctx context.Context, productID string) (int32, error) {
+	ctx = logging.With(ctx, "productID", productID)
+	logging.From(ctx).Info("[queryResolver] GetPrice")
+
+	data := []byte(productID)
+	msg, err := r.NC.Request("products.price", data, 2*time.Second)
+	if err != nil {
+		logging.From(ctx).Error("failed to request price", "subject", "products.price", "error", err)
+		return 0, err
+	}
+
+	var price int
+	if err := json.Unmarshal(msg.Data, &price); err != nil {
+		logging.From(ctx).Error("failed to get price", "error", err)
+		return 0, err
+	}
+
+	logging.From(ctx).Info("fetched price", "price", price)
+	return int32(price), nil
+}
+
+// IsCacheEnabled is the resolver for the isCacheEnabled field.
+func (r *queryResolver) IsCacheEnabled(ctx context.Context) (bool, error) {
+	panic(fmt.Errorf("not implemented: IsCacheEnabled - isCacheEnabled"))
+}
+
+// IsThrottlingEnabled is the resolver for the isThrottlingEnabled field.
+func (r *queryResolver) IsThrottlingEnabled(ctx context.Context) (bool, error) {
+	panic(fmt.Errorf("not implemented: IsThrottlingEnabled - isThrottlingEnabled"))
+}
+
+// Orders is the resolver for the orders field.
+func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
+	ctx = logging.With(ctx)
+	logging.From(ctx).Info("[queryResolver] Orders")
+
+	msg, err := r.NC.Request("orders.all", nil, 2*time.Second)
+	if err != nil {
+		logging.From(ctx).Error("failed to request orders", "subject", "orders.all", "error", err)
+		return nil, err
+	}
+
+	var orders []*model.Order
+	if err := json.Unmarshal(msg.Data, &orders); err != nil {
+		logging.From(ctx).Error("failed to unmarshal orders", "error", err)
+		return nil, err
+	}
+
+	logging.From(ctx).Info("fetched orders", "count", len(orders))
+	return orders, nil
+}
+
+// OrdersByUserID is the resolver for the ordersByUserId field.
+func (r *queryResolver) OrdersByUserID(ctx context.Context, userID string) ([]*model.Order, error) {
+	panic(fmt.Errorf("not implemented: OrdersByUserID - ordersByUserId"))
+}
+
+// OrderByID is the resolver for the orderById field.
+func (r *queryResolver) OrderByID(ctx context.Context, orderID string) (*model.Order, error) {
+	panic(fmt.Errorf("not implemented: OrderByID - orderById"))
 }
 
 // ProductByID is the resolver for the productById field.
@@ -117,52 +210,14 @@ func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) 
 	return rows, nil
 }
 
-// Orders is the resolver for the orders field.
-func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
-	ctx = logging.With(ctx)
-	logging.From(ctx).Info("[queryResolver] Orders")
-
-	msg, err := r.NC.Request("orders.all", nil, 2*time.Second)
-	if err != nil {
-		logging.From(ctx).Error("failed to request orders", "subject", "orders.all", "error", err)
-		return nil, err
-	}
-
-	var orders []*model.Order
-	if err := json.Unmarshal(msg.Data, &orders); err != nil {
-		logging.From(ctx).Error("failed to unmarshal orders", "error", err)
-		return nil, err
-	}
-
-	logging.From(ctx).Info("fetched orders", "count", len(orders))
-	return orders, nil
+// UserByID is the resolver for the userById field.
+func (r *queryResolver) UserByID(ctx context.Context, userID string) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: UserByID - userById"))
 }
 
-// GetPrice is the resolver for the getPrice field.
-func (r *queryResolver) GetPrice(ctx context.Context, productID string) (int32, error) {
-	ctx = logging.With(ctx, "productID", productID)
-	logging.From(ctx).Info("[queryResolver] GetPrice")
-
-	data := []byte(productID)
-	msg, err := r.NC.Request("products.price", data, 2*time.Second)
-	if err != nil {
-		logging.From(ctx).Error("failed to request price", "subject", "products.price", "error", err)
-		return 0, err
-	}
-
-	var price int
-	if err := json.Unmarshal(msg.Data, &price); err != nil {
-		logging.From(ctx).Error("failed to get price", "error", err)
-		return 0, err
-	}
-
-	logging.From(ctx).Info("fetched price", "price", price)
-	return int32(price), nil
-}
-
-// MyOrders is the resolver for the myOrders field.
-func (r *subscriptionResolver) MyOrders(ctx context.Context) (<-chan *model.Order, error) {
-	panic(fmt.Errorf("not implemented: MyOrders - myOrders"))
+// Users is the resolver for the users field.
+func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+	panic(fmt.Errorf("not implemented: Users - users"))
 }
 
 // LastOrderCreated is the resolver for the lastOrderCreated field.
@@ -196,79 +251,6 @@ func (r *subscriptionResolver) LastOrderCreated(ctx context.Context) (<-chan *mo
 	return ch, nil
 }
 
-// OrdersByEvent is the resolver for the ordersByEvent field.
-func (r *subscriptionResolver) OrdersByEvent(ctx context.Context, eventID string) (<-chan *model.Order, error) {
-	ctx = logging.With(ctx, "eventID", eventID)
-	logging.From(ctx).Info("[subscriptionResolver] OrdersByEvent")
-	ch := make(chan *model.Order, 8) // buffered to avoid blocking NATS callback
-
-	sub, err := r.NC.Subscribe("order.created", func(m *nats.Msg) {
-		var o model.Order
-		if err := json.Unmarshal(m.Data, &o); err != nil {
-			logging.From(ctx).Error("failed to unmarshal order", "error", err)
-			return
-		}
-		if o.EventID != eventID {
-			return
-		}
-		select {
-		case ch <- &o:
-		case <-ctx.Done():
-			return
-		}
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		<-ctx.Done()
-		_ = sub.Unsubscribe()
-		close(ch)
-	}()
-
-	return ch, nil
-}
-
-// OrdersByOrderID is the resolver for the ordersByOrderId field.
-func (r *subscriptionResolver) OrdersByOrderID(ctx context.Context, orderID string) (<-chan *model.Order, error) {
-	ctx = logging.With(ctx, "orderID", orderID)
-	logging.From(ctx).Info("[subscriptionResolver] OrdersByOrderID")
-	ch := make(chan *model.Order, 8) // buffered to avoid blocking NATS callback
-
-	sub, err := r.NC.Subscribe("order.created", func(m *nats.Msg) {
-		var o model.Order
-		if err := json.Unmarshal(m.Data, &o); err != nil {
-			logging.From(ctx).Error("failed to unmarshal order", "error", err)
-			return
-		}
-		if o.ID != orderID {
-			return
-		}
-		select {
-		case ch <- &o:
-		case <-ctx.Done():
-			return
-		}
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		<-ctx.Done()
-		_ = sub.Unsubscribe()
-		close(ch)
-	}()
-
-	return ch, nil
-}
-
-// OrdersByProductID is the resolver for the ordersByProductId field.
-func (r *subscriptionResolver) OrdersByProductID(ctx context.Context, productID string) (<-chan *model.Order, error) {
-	panic(fmt.Errorf("not implemented: OrdersByProductID - ordersByProductId"))
-}
-
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
@@ -281,15 +263,3 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *subscriptionResolver) CurrentTime(ctx context.Context) (<-chan *model.Time, error) {
-	panic(fmt.Errorf("not implemented: CurrentTime - currentTime"))
-}
-*/

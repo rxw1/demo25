@@ -18,7 +18,13 @@ export type Scalars = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  cancelOrder?: Maybe<Order>;
   createOrder?: Maybe<Order>;
+};
+
+
+export type MutationCancelOrderArgs = {
+  orderId: Scalars['ID']['input'];
 };
 
 
@@ -64,10 +70,11 @@ export type QueryProductByIdArgs = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  currentTime: Time;
   lastOrderCreated: Order;
+  myOrders: Order;
   ordersByEvent: Order;
   ordersByOrderId: Order;
+  ordersByProductId: Order;
 };
 
 
@@ -78,6 +85,11 @@ export type SubscriptionOrdersByEventArgs = {
 
 export type SubscriptionOrdersByOrderIdArgs = {
   orderId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionOrdersByProductIdArgs = {
+  productId: Scalars['ID']['input'];
 };
 
 export type Time = {

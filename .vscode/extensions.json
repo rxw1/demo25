@@ -1,0 +1,12 @@
+{
+	"recommendations": [
+		"biomejs.biome",
+		"golang.go",
+		"apollographql.vscode-apollo",
+		"graphql.vscode-graphql-syntax",
+		"dnut.rewrap-revived",
+		"ms-azuretools.vscode-docker",
+		"editorconfig.editorconfig",
+		"yoavbls.pretty-ts-errors"
+	]
+}
