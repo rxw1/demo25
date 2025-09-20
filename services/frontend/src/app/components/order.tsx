@@ -3,7 +3,7 @@ import { useQuery } from "@apollo/client/react";
 import { FetchOrdersDocument, Order } from "../__generated__/graphql";
 
 const Q = gql`
-  query FetchOrders {
+  query Orders {
     orders {
       id
       productId
@@ -17,7 +17,7 @@ type Data = {
   orders: Order[]
 }
 
-export default function Products({}) {
+export default function Orders({}) {
   const { data } = useQuery<Data>(FetchOrdersDocument, {})
 
   return (

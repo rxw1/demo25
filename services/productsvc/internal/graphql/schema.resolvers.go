@@ -8,61 +8,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	rand "math/rand/v2"
 	"rxw1/logging"
 	"rxw1/productsvc/internal/model"
 	"time"
 
 	nats "github.com/nats-io/nats.go"
-	ulid "github.com/oklog/ulid/v2"
 )
-
-// CancelOrder is the resolver for the cancelOrder field.
-func (r *mutationResolver) CancelOrder(ctx context.Context, orderID string) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: CancelOrder - cancelOrder"))
-}
 
 // ClearCache is the resolver for the clearCache field.
 func (r *mutationResolver) ClearCache(ctx context.Context) (bool, error) {
 	panic(fmt.Errorf("not implemented: ClearCache - clearCache"))
-}
-
-// CreateOrder is the resolver for the createOrder field.
-func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qty int32) (*model.Order, error) {
-	ctx = logging.With(ctx, "productID", productID)
-	logging.From(ctx).Info("[mutationResolver] CreateOrder")
-
-	event := map[string]any{
-		"id":        ulid.Make().String(),
-		"eventID":   ulid.Make().String(),
-		"productID": productID,
-		"qty":       qty,
-		"createdAt": time.Now().UTC().Format(time.RFC3339),
-	}
-
-	b, err := json.Marshal(event)
-	if err != nil {
-		logging.From(ctx).Error("failed to marshal event", "error", err)
-		return nil, err
-	}
-
-	time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
-
-	if err := r.NC.Publish("order.created", b); err != nil {
-		logging.From(ctx).Error("failed to publish event", "error", err)
-		return nil, err
-	}
-
-	order := &model.Order{
-		ID:        event["id"].(string),
-		Qty:       event["qty"].(int32),
-		ProductID: event["productID"].(string),
-		EventID:   event["eventID"].(string),
-		CreatedAt: event["createdAt"].(string),
-	}
-
-	logging.From(ctx).Info("order created", "order", order)
-	return order, nil
 }
 
 // DisableCache is the resolver for the disableCache field.
@@ -83,6 +38,39 @@ func (r *mutationResolver) EnableCache(ctx context.Context) (bool, error) {
 // EnableThrottling is the resolver for the enableThrottling field.
 func (r *mutationResolver) EnableThrottling(ctx context.Context) (bool, error) {
 	panic(fmt.Errorf("not implemented: EnableThrottling - enableThrottling"))
+}
+
+// CreateOrder is the resolver for the createOrder field.
+func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qty int32) (*model.Order, error) {
+	ctx = logging.With(ctx, "mutation", "CreateOrder", "productId", productID, "qty", qty)
+	logging.From(ctx).Info("creating order")
+
+	// Build an event payload to publish; ordersvc will materialize an ID
+	evt := struct {
+		ID        string `json:"id"`
+		ProductID string `json:"productId"`
+		Qty       int32  `json:"qty"`
+		CreatedAt string `json:"createdAt"`
+	}{
+		ID:        "", // ordersvc will generate ID upon materialization
+		ProductID: productID,
+		Qty:       qty,
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+
+	b, _ := json.Marshal(evt)
+	if err := r.NC.Publish("order.created", b); err != nil {
+		logging.From(ctx).Error("failed to publish order.created", "error", err)
+		return nil, err
+	}
+
+	// Return a minimal echo object for UX; createdAt now, no id until read back
+	return &model.Order{
+		ID:        "pending",
+		ProductID: productID,
+		Qty:       qty,
+		CreatedAt: evt.CreatedAt,
+	}, nil
 }
 
 // CurrentTime is the resolver for the currentTime field.
@@ -120,37 +108,6 @@ func (r *queryResolver) IsCacheEnabled(ctx context.Context) (bool, error) {
 // IsThrottlingEnabled is the resolver for the isThrottlingEnabled field.
 func (r *queryResolver) IsThrottlingEnabled(ctx context.Context) (bool, error) {
 	panic(fmt.Errorf("not implemented: IsThrottlingEnabled - isThrottlingEnabled"))
-}
-
-// Orders is the resolver for the orders field.
-func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
-	ctx = logging.With(ctx)
-	logging.From(ctx).Info("[queryResolver] Orders")
-
-	msg, err := r.NC.Request("orders.all", nil, 2*time.Second)
-	if err != nil {
-		logging.From(ctx).Error("failed to request orders", "subject", "orders.all", "error", err)
-		return nil, err
-	}
-
-	var orders []*model.Order
-	if err := json.Unmarshal(msg.Data, &orders); err != nil {
-		logging.From(ctx).Error("failed to unmarshal orders", "error", err)
-		return nil, err
-	}
-
-	logging.From(ctx).Info("fetched orders", "count", len(orders))
-	return orders, nil
-}
-
-// OrdersByUserID is the resolver for the ordersByUserId field.
-func (r *queryResolver) OrdersByUserID(ctx context.Context, userID string) ([]*model.Order, error) {
-	panic(fmt.Errorf("not implemented: OrdersByUserID - ordersByUserId"))
-}
-
-// OrderByID is the resolver for the orderById field.
-func (r *queryResolver) OrderByID(ctx context.Context, orderID string) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: OrderByID - orderById"))
 }
 
 // ProductByID is the resolver for the productById field.
@@ -210,6 +167,34 @@ func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) 
 	return rows, nil
 }
 
+// Orders is the resolver for the orders field.
+func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
+	ctx = logging.With(ctx, "query", "Orders")
+	logging.From(ctx).Info("requesting all orders via NATS")
+
+	msg, err := r.NC.Request("orders.all", nil, 2*time.Second)
+	if err != nil {
+		logging.From(ctx).Error("failed to request orders", "error", err)
+		return nil, err
+	}
+	type orderDoc struct {
+		ID        string `json:"id"`
+		ProductID string `json:"productId"`
+		Qty       int32  `json:"qty"`
+		CreatedAt string `json:"createdAt"`
+	}
+	var docs []orderDoc
+	if err := json.Unmarshal(msg.Data, &docs); err != nil {
+		logging.From(ctx).Error("failed to unmarshal orders", "error", err)
+		return nil, err
+	}
+	out := make([]*model.Order, 0, len(docs))
+	for _, d := range docs {
+		out = append(out, &model.Order{ID: d.ID, ProductID: d.ProductID, Qty: d.Qty, CreatedAt: d.CreatedAt})
+	}
+	return out, nil
+}
+
 // UserByID is the resolver for the userById field.
 func (r *queryResolver) UserByID(ctx context.Context, userID string) (*model.User, error) {
 	panic(fmt.Errorf("not implemented: UserByID - userById"))
@@ -222,20 +207,23 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 
 // LastOrderCreated is the resolver for the lastOrderCreated field.
 func (r *subscriptionResolver) LastOrderCreated(ctx context.Context) (<-chan *model.Order, error) {
-	ctx = logging.With(ctx)
-	logging.From(ctx).Info("[subscriptionResolver] LastOrderCreated")
-	ch := make(chan *model.Order, 8) // buffered to avoid blocking NATS callback
+	ctx = logging.With(ctx, "subscription", "LastOrderCreated")
+	ch := make(chan *model.Order, 8)
 
 	sub, err := r.NC.Subscribe("order.created", func(m *nats.Msg) {
-		var o model.Order
-		if err := json.Unmarshal(m.Data, &o); err != nil {
-			logging.From(ctx).Error("failed to unmarshal order", "error", err)
+		var e struct {
+			ID        string `json:"id"`
+			ProductID string `json:"productId"`
+			Qty       int32  `json:"qty"`
+			CreatedAt string `json:"createdAt"`
+		}
+		if err := json.Unmarshal(m.Data, &e); err != nil {
+			logging.From(ctx).Error("failed to unmarshal order.created", "error", err)
 			return
 		}
 		select {
-		case ch <- &o:
+		case ch <- &model.Order{ID: e.ID, ProductID: e.ProductID, Qty: e.Qty, CreatedAt: e.CreatedAt}:
 		case <-ctx.Done():
-			return
 		}
 	})
 	if err != nil {
@@ -247,7 +235,6 @@ func (r *subscriptionResolver) LastOrderCreated(ctx context.Context) (<-chan *mo
 		_ = sub.Unsubscribe()
 		close(ch)
 	}()
-
 	return ch, nil
 }
 

@@ -29,40 +29,31 @@ type Order struct {
 	CreatedAt string
 }
 
-func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, store *mongo.Store) (*nats.Subscription, error) {
-	ctx2 := logging.With(ctx, "nats", "Start")
+func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, mo *mongo.Store, ff *flags.Flags) (*nats.Subscription, error) {
+	ctx = logging.With(ctx, "fn", "SubscribeToOrdersCreated", "pkg", "NATS")
 	sub, err := nc.Subscribe("order.created", func(m *nats.Msg) {
 		var e Event
 		if json.Unmarshal(m.Data, &e) != nil {
-			logging.From(ctx2).Error("EVENT failed to unmarshal event", "data", string(m.Data))
+			logging.From(ctx).Error("EVENT failed to unmarshal event", "data", string(m.Data))
 			return
 		}
 
 		ts, err := time.Parse(time.RFC3339, e.CreatedAt)
 		if err != nil {
-			logging.From(ctx2).Error("EVENT failed to parse time", "error", err, "createdAt", e.CreatedAt)
+			logging.From(ctx).Error("EVENT failed to parse time", "error", err, "createdAt", e.CreatedAt)
 			return
 		}
 
-		logging.From(ctx2).Info("EVENT received order created", "eventId", e.ID, "productId", e.ProductID, "qty", e.Qty, "createdAt", e.CreatedAt)
+		logging.From(ctx).Info("EVENT received order created", "eventId", e.ID, "productId", e.ProductID, "qty", e.Qty, "createdAt", e.CreatedAt)
 
-		if ctx.Value("flags") == nil {
-			logging.From(ctx2).Error("flags not found in context")
-			return
-		}
-		flags, ok := ctx.Value("flags").(*flags.Flags)
-		if !ok {
-			logging.From(ctx2).Error("flags has wrong type in context")
-			return
-		}
-		if flags.ThrottleEnabled(ctx) {
-			logging.From(ctx2).Info("throttling enabled, sleeping")
+		if ff.ThrottleEnabled(ctx) {
+			logging.From(ctx).Info("throttling enabled, sleeping")
 			time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
 		}
 
-		err = store.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
+		err = mo.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
 		if err != nil {
-			logging.From(ctx2).Error("EVENT failed to add order", "error", err)
+			logging.From(ctx).Error("EVENT failed to add order", "error", err)
 			return
 		}
 
@@ -71,25 +62,25 @@ func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, store *mongo.S
 	return sub, err
 }
 
-func SubscribeToOrdersRequested(ctx context.Context, nc *nats.Conn, store *mongo.Store) (*nats.Subscription, error) {
-	ctx2 := logging.With(ctx, "nats", "Start")
+func SubscribeToOrdersRequested(ctx context.Context, nc *nats.Conn, mo *mongo.Store, ff *flags.Flags) (*nats.Subscription, error) {
+	ctx = logging.With(ctx, "fn", "SubscribeToOrdersRequested", "pkg", "NATS")
 	sub, err := nc.Subscribe("orders.all", func(m *nats.Msg) {
-		res, err := store.GetAllOrders(ctx)
+		res, err := mo.GetAllOrders(ctx)
 		if err != nil {
-			logging.From(ctx2).Error("failed to get all orders", "error", err)
+			logging.From(ctx).Error("failed to get all orders", "error", err)
 			return
 		}
 
 		b, err := json.Marshal(res)
 		if err != nil {
-			logging.From(ctx2).Error("failed to marshal orders", "error", err)
+			logging.From(ctx).Error("failed to marshal orders", "error", err)
 			return
 		}
 
-		logging.From(ctx2).Info("responding to orders.all", "count", len(res))
+		logging.From(ctx).Info("responding to orders.all", "count", len(res))
 
 		if err := m.Respond(b); err != nil {
-			logging.From(ctx2).Error("failed to respond to orders.all", "error", err)
+			logging.From(ctx).Error("failed to respond to orders.all", "error", err)
 			return
 		}
 	})

@@ -3,3 +3,4 @@ services/product-svc/_trash
 infra/_bak
 services/product-svc/.bak/_bak
 docs/old-and-maybe-inaccurate-docs
+services/gateway/node_modules

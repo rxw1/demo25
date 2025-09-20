@@ -7,11 +7,9 @@ type Mutation struct {
 
 type Order struct {
 	ID        string `json:"id"`
-	Qty       int32  `json:"qty"`
 	ProductID string `json:"productId"`
-	EventID   string `json:"eventId"`
+	Qty       int32  `json:"qty"`
 	CreatedAt string `json:"createdAt"`
-	Price     int32  `json:"price"`
 }
 
 type Product struct {

@@ -1,9 +1,9 @@
 "use client"
 import {
-  ApolloClient,
-  ApolloLink,
-  HttpLink,
-  InMemoryCache
+    ApolloClient,
+    ApolloLink,
+    HttpLink,
+    InMemoryCache
 } from "@apollo/client";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { ApolloProvider } from "@apollo/client/react";
@@ -12,37 +12,39 @@ import { createClient } from "graphql-ws";
 import Comp1 from "./components/comp1";
 
 export const graphQLEndpoint =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:8080/graphql"
+    process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:4000/graphql"
+
 const wsUrl = graphQLEndpoint.replace(/^http/, "ws")
+//const wsUrl = "ws://localhost:4000/graphql"
 
 const httpLink = new HttpLink({
-  uri: graphQLEndpoint,
+    uri: graphQLEndpoint,
 })
 
 const wsLink = new GraphQLWsLink(
-  createClient({
-    url: wsUrl,
-  })
+    createClient({
+        url: wsUrl,
+    })
 )
 
 const splitLink = ApolloLink.split(
-  ({ operationType }) => {
-    return operationType === OperationTypeNode.SUBSCRIPTION
-  },
-  wsLink,
-  httpLink
+    ({ operationType }) => {
+        return operationType === OperationTypeNode.SUBSCRIPTION
+    },
+    wsLink,
+    httpLink
 )
 
 const client = new ApolloClient({
-  link: splitLink,
+    link: splitLink,
 
-  cache: new InMemoryCache(),
+    cache: new InMemoryCache(),
 })
 
 export default function Home() {
-  return (
-    <ApolloProvider client={client}>
-      <Comp1 />
-    </ApolloProvider>
-  )
+    return (
+        <ApolloProvider client={client}>
+            <Comp1 />
+        </ApolloProvider>
+    )
 }

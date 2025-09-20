@@ -21,6 +21,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
@@ -29,6 +30,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/redis/go-redis/v9"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
 //go:embed migrations/*.sql
@@ -58,6 +60,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer pg.Pool.Close()
 
 	// Migrations
 	if os.Getenv("AUTO_MIGRATE") == "true" {
@@ -71,6 +74,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer nc.Drain()
 
 	// Jetstream
 	_, err = jetstream.New(nc)
@@ -81,6 +85,8 @@ func main() {
 	// Redis
 	rc := cache.New(os.Getenv("REDIS_ADDR"))
 	_ = redis.NewClient // keep import
+
+	// Flags
 	ff := flags.New()
 
 	// GraphQL
@@ -133,10 +139,16 @@ func main() {
 		},
 	})
 
+	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
+
 	srv.AddTransport(transport.Options{}) // For the playground
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{}) // Must be after the WebSocket transport
+
 	srv.Use(extension.Introspection{}) // For running gqlgen
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New[string](100),
+	})
 
 	r := chi.NewRouter()
 

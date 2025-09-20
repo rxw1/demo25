@@ -76,6 +76,7 @@ uninstall:
 gql: graphql
 graphql:
 	$(MAKE) -C services/productsvc gqlgen
+	$(MAKE) -C services/ordersvc gqlgen
 	$(MAKE) -C services/frontend codegen
 
 .PHONY: lint

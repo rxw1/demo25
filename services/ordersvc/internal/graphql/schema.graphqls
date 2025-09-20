@@ -1,0 +1,23 @@
+type Order {
+  id: ID!
+  qty: Int!
+  productId: ID!
+  eventId: String!
+  createdAt: String!
+  price: Int!
+}
+
+type Query {
+  orders: [Order!]!
+  ordersByUserId(userId: ID!): [Order!]!
+  orderById(orderId: ID!): Order
+}
+
+type Mutation {
+  cancelOrder(orderId: ID!): Order
+  createOrder(productId: ID!, qty: Int!): Order
+}
+
+type Subscription {
+  lastOrderCreated: Order!
+}

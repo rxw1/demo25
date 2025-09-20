@@ -14,15 +14,6 @@ type Product {
   name: String!
 }
 
-type Order {
-  id: ID!
-  qty: Int!
-  productId: ID!
-  eventId: String!
-  createdAt: String!
-  price: Int!
-}
-
 type Time {
   unixTime: Int!
   timeStamp: String!
@@ -33,25 +24,33 @@ type Query {
   getPrice(productId: ID!): Int!
   isCacheEnabled: Boolean!
   isThrottlingEnabled: Boolean!
-  orders: [Order!]!
-  ordersByUserId(userId: ID!): [Order!]!
-  orderById(orderId: ID!): Order
   productById(productId: ID!): Product
   products: [Product!]!
+  # Fetch all orders (proxied to ordersvc via NATS request "orders.all")
+  orders: [Order!]!
   userById(userId: ID!): User
   users: [User!]!
 }
 
 type Mutation {
-  cancelOrder(orderId: ID!): Order
   clearCache: Boolean!
-  createOrder(productId: ID!, qty: Int!): Order
   disableCache: Boolean!
   disableThrottling: Boolean!
   enableCache: Boolean!
   enableThrottling: Boolean!
+  # Create an order (publishes NATS event "order.created")
+  createOrder(productId: ID!, qty: Int!): Order!
+}
+
+# Order related types and subscription
+type Order {
+  id: ID!
+  productId: ID!
+  qty: Int!
+  createdAt: String!
 }
 
 type Subscription {
+  # Stream the last created order via NATS subject "order.created"
   lastOrderCreated: Order!
 }

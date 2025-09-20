@@ -42,8 +42,14 @@ lint:
 test-dns:
 	kubectl run -it --rm busybox --image=busybox --restart=Never -- nslookup $(NAME).$(NAMESPACE).svc.cluster.local
 
-###
+.PHONY: gqlgen
+graphql: gqlgen
+gqlgen:
+	go run github.com/99designs/gqlgen generate
 
 .PHONY: name
 name:
 	@awk -F/ 'NR==1{print $$NF}' < go.mod
+
+###
+

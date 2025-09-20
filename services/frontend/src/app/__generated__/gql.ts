@@ -14,13 +14,13 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.FetchOrdersDocument,
+    "\n  query Orders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.OrdersDocument,
     "\n  subscription LastOrderCreated {\n    lastOrderCreated {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.LastOrderCreatedDocument,
     "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n": typeof types.FetchProductsDocument,
     "\n  mutation CreateOrder($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": typeof types.CreateOrderDocument,
 };
 const documents: Documents = {
-    "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.FetchOrdersDocument,
+    "\n  query Orders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.OrdersDocument,
     "\n  subscription LastOrderCreated {\n    lastOrderCreated {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.LastOrderCreatedDocument,
     "\n  query FetchProducts {\n    products {\n      id\n      name\n      price\n    }\n  }\n": types.FetchProductsDocument,
     "\n  mutation CreateOrder($productId: ID!, $qty: Int!) {\n    createOrder(productId: $productId, qty: $qty) {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n": types.CreateOrderDocument,
@@ -43,7 +43,7 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query FetchOrders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"];
+export function graphql(source: "\n  query Orders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  query Orders {\n    orders {\n      id\n      productId\n      qty\n      createdAt\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

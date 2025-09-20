@@ -32,7 +32,7 @@ deploy: build import upgrade restart
 .PHONY: run
 run:
 	docker run -d --name $(NAME) $(NAME):latest
-	
+
 .PHONY: lint
 lint:
 	helm lint chart
@@ -42,18 +42,19 @@ lint:
 test-dns:
 	kubectl run -it --rm busybox --image=busybox --restart=Never -- nslookup $(NAME).$(NAMESPACE).svc.cluster.local
 
-###
-
 .PHONY: gqlgen
 graphql: gqlgen
 gqlgen:
 	go run github.com/99designs/gqlgen generate
+
+.PHONY: name
+name:
+	@awk -F/ 'NR==1{print $$NF}' < go.mod
+
+###
 
 .PHONY: clean
 clean:
 	$(RM) internal/graphql/generated.go
 	$(RM) internal/model/models_gen.go
 
-.PHONY: name
-name:
-	@awk -F/ 'NR==1{print $$NF}' < go.mod

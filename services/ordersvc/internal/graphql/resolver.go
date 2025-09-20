@@ -1,9 +1,9 @@
 package graphql
 
 import (
-	"rxw1/productsvc/internal/cache"
-	"rxw1/productsvc/internal/db"
-	"rxw1/productsvc/internal/flags"
+	"rxw1/ordersvc/internal/cache"
+	"rxw1/ordersvc/internal/flags"
+	"rxw1/ordersvc/internal/mongo"
 
 	"github.com/nats-io/nats.go"
 )
@@ -12,7 +12,7 @@ import (
 // injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	PG *db.PG
+	MO *mongo.Store
 	NC *nats.Conn
 	RC *cache.Cache
 	FF *flags.Flags
