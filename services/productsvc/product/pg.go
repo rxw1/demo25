@@ -2,13 +2,13 @@
 /// Migrations using golang-migrate with embedded migrations
 /// Migrations are run automatically if AUTO_MIGRATE env is "true"
 
-package db
+package product
 
 import (
 	"context"
 
+	"rxw1/gatewaysvc/model"
 	"rxw1/logging"
-	"rxw1/productsvc/internal/model"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

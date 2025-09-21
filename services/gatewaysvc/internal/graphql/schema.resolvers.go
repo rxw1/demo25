@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	rand "math/rand/v2"
-	"rxw1/gatewaysvc/internal/model"
+	"rxw1/gatewaysvc/model"
 	"rxw1/logging"
 	"time"
 

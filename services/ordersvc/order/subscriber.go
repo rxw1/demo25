@@ -1,4 +1,4 @@
-package nats
+package order
 
 import (
 	"context"
@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"rxw1/logging"
-	"rxw1/ordersvc/internal/flags"
-	"rxw1/ordersvc/internal/mongo"
 
 	"github.com/nats-io/nats.go"
 )
@@ -20,15 +18,7 @@ type Event struct {
 	Qty       int
 }
 
-type Order struct {
-	ID        string
-	EventID   string
-	ProductID string
-	Qty       int32
-	CreatedAt string
-}
-
-func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, mo *mongo.Store, ff *flags.Flags) (*nats.Subscription, error) {
+func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, mo *Store, ff *Flags) (*nats.Subscription, error) {
 	// ctx = logging.With(ctx, "fn", "SubscribeToOrdersCreated", "package", "nats")
 
 	sub, err := nc.Subscribe("order.created", func(m *nats.Msg) {
@@ -64,7 +54,7 @@ func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, mo *mongo.Stor
 	return sub, err
 }
 
-func SubscribeToOrdersRequested(ctx context.Context, nc *nats.Conn, mo *mongo.Store, ff *flags.Flags) (*nats.Subscription, error) {
+func SubscribeToOrdersRequested(ctx context.Context, nc *nats.Conn, mo *Store, ff *Flags) (*nats.Subscription, error) {
 	ctx = logging.With(ctx, "fn", "SubscribeToOrdersRequested", "pkg", "NATS")
 	sub, err := nc.Subscribe("orders.all", func(m *nats.Msg) {
 		res, err := mo.GetAllOrders(ctx)

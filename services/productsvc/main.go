@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"rxw1/logging"
-	"rxw1/productsvc/internal/db"
+	"rxw1/productsvc/product"
 
 	"github.com/nats-io/nats.go"
 )
@@ -37,7 +37,7 @@ func main() {
 	logger.Info("boot", "pid", os.Getpid())
 
 	// Postgres
-	pg, err := db.Connect(ctx, os.Getenv("DATABASE_URL"))
+	pg, err := product.Connect(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func main() {
 
 	// Migrations
 	if os.Getenv("AUTO_MIGRATE") == "true" {
-		if err := db.Migrate(ctx, os.Getenv("DATABASE_URL"), migrationsFS); err != nil {
+		if err := product.Migrate(ctx, os.Getenv("DATABASE_URL"), migrationsFS); err != nil {
 			log.Fatal("migrate failed: ", err)
 		}
 	}

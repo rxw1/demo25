@@ -7,7 +7,7 @@ exec:
   package: graphql
 
 model:
-  filename: internal/model/models_gen.go
+  filename: model/models_gen.go
   package: model
 
 resolver:
@@ -15,13 +15,6 @@ resolver:
   layout: follow-schema
   dir: internal/graphql
   filename_template: "{name}.resolvers.go"
-
-# federation:
-#   filename: internal/graphql/federation.go
-#   package: graphql
-#   version: 2
-#   options:
-#     computed_requires: true
 
 call_argument_directives_with_null: true
 

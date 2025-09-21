@@ -1,25 +1,17 @@
-package mongo
+package order
 
 import (
 	"context"
 	"time"
 
+	"rxw1/gatewaysvc/model"
 	"rxw1/logging"
 
 	"github.com/oklog/ulid/v2"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-type Order struct {
-	ID        string
-	EventID   string
-	ProductID string
-	Qty       int32
-	CreatedAt primitive.DateTime
-}
 
 type Store struct{ C *mongo.Collection }
 
@@ -51,14 +43,14 @@ func (s *Store) AddOrder(ctx context.Context, eventID, productID string, qty int
 	return err
 }
 
-func (s *Store) GetAllOrders(ctx context.Context) ([]Order, error) {
+func (s *Store) GetAllOrders(ctx context.Context) ([]model.Order, error) {
 	ctx = logging.With(ctx, "mongo", "GetAllOrders")
 	cur, err := s.C.Find(ctx, bson.M{})
 	if err != nil {
 		logging.From(ctx).Error("DATABASE MONGO failed to find orders", "error", err)
 		return nil, err
 	}
-	var orders []Order
+	var orders []model.Order
 	if err := cur.All(ctx, &orders); err != nil {
 		logging.From(ctx).Error("DATABASE MONGO failed to decode orders", "error", err)
 		return nil, err

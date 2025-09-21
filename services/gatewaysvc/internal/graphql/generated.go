@@ -8,7 +8,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"rxw1/gatewaysvc/internal/model"
+	"rxw1/gatewaysvc/model"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -653,7 +653,7 @@ func (ec *executionContext) _Mutation_createOrder(ctx context.Context, field gra
 			return ec.resolvers.Mutation().CreateOrder(ctx, fc.Args["productId"].(string), fc.Args["qty"].(int32))
 		},
 		nil,
-		ec.marshalOOrder2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrder,
+		ec.marshalOOrder2ᚖrxw1ᚋgatewaysvcᚋmodelᚐOrder,
 		true,
 		false,
 	)
@@ -708,7 +708,7 @@ func (ec *executionContext) _Mutation_cancelOrder(ctx context.Context, field gra
 			return ec.resolvers.Mutation().CancelOrder(ctx, fc.Args["orderId"].(string))
 		},
 		nil,
-		ec.marshalOOrder2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrder,
+		ec.marshalOOrder2ᚖrxw1ᚋgatewaysvcᚋmodelᚐOrder,
 		true,
 		false,
 	)
@@ -1168,7 +1168,7 @@ func (ec *executionContext) _Query_currentTime(ctx context.Context, field graphq
 			return ec.resolvers.Query().CurrentTime(ctx)
 		},
 		nil,
-		ec.marshalNTime2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐTime,
+		ec.marshalNTime2ᚖrxw1ᚋgatewaysvcᚋmodelᚐTime,
 		true,
 		true,
 	)
@@ -1261,7 +1261,7 @@ func (ec *executionContext) _Query_orders(ctx context.Context, field graphql.Col
 			return ec.resolvers.Query().Orders(ctx)
 		},
 		nil,
-		ec.marshalNOrder2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrderᚄ,
+		ec.marshalNOrder2ᚕᚖrxw1ᚋgatewaysvcᚋmodelᚐOrderᚄ,
 		true,
 		true,
 	)
@@ -1305,7 +1305,7 @@ func (ec *executionContext) _Query_orderById(ctx context.Context, field graphql.
 			return ec.resolvers.Query().OrderByID(ctx, fc.Args["orderId"].(string))
 		},
 		nil,
-		ec.marshalOOrder2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrder,
+		ec.marshalOOrder2ᚖrxw1ᚋgatewaysvcᚋmodelᚐOrder,
 		true,
 		false,
 	)
@@ -1360,7 +1360,7 @@ func (ec *executionContext) _Query_ordersByUserId(ctx context.Context, field gra
 			return ec.resolvers.Query().OrdersByUserID(ctx, fc.Args["userId"].(string))
 		},
 		nil,
-		ec.marshalNOrder2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrderᚄ,
+		ec.marshalNOrder2ᚕᚖrxw1ᚋgatewaysvcᚋmodelᚐOrderᚄ,
 		true,
 		true,
 	)
@@ -1414,7 +1414,7 @@ func (ec *executionContext) _Query_products(ctx context.Context, field graphql.C
 			return ec.resolvers.Query().Products(ctx)
 		},
 		nil,
-		ec.marshalNProduct2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐProductᚄ,
+		ec.marshalNProduct2ᚕᚖrxw1ᚋgatewaysvcᚋmodelᚐProductᚄ,
 		true,
 		true,
 	)
@@ -1452,7 +1452,7 @@ func (ec *executionContext) _Query_productById(ctx context.Context, field graphq
 			return ec.resolvers.Query().ProductByID(ctx, fc.Args["productId"].(string))
 		},
 		nil,
-		ec.marshalOProduct2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐProduct,
+		ec.marshalOProduct2ᚖrxw1ᚋgatewaysvcᚋmodelᚐProduct,
 		true,
 		false,
 	)
@@ -1500,7 +1500,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 			return ec.resolvers.Query().Users(ctx)
 		},
 		nil,
-		ec.marshalNUser2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐUserᚄ,
+		ec.marshalNUser2ᚕᚖrxw1ᚋgatewaysvcᚋmodelᚐUserᚄ,
 		true,
 		true,
 	)
@@ -1536,7 +1536,7 @@ func (ec *executionContext) _Query_userById(ctx context.Context, field graphql.C
 			return ec.resolvers.Query().UserByID(ctx, fc.Args["userId"].(string))
 		},
 		nil,
-		ec.marshalOUser2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐUser,
+		ec.marshalOUser2ᚖrxw1ᚋgatewaysvcᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -1690,7 +1690,7 @@ func (ec *executionContext) _Subscription_lastOrderCreated(ctx context.Context, 
 			return ec.resolvers.Subscription().LastOrderCreated(ctx)
 		},
 		nil,
-		ec.marshalNOrder2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrder,
+		ec.marshalNOrder2ᚖrxw1ᚋgatewaysvcᚋmodelᚐOrder,
 		true,
 		true,
 	)
@@ -4243,11 +4243,11 @@ func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNOrder2rxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v model.Order) graphql.Marshaler {
+func (ec *executionContext) marshalNOrder2rxw1ᚋgatewaysvcᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v model.Order) graphql.Marshaler {
 	return ec._Order(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrder2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
+func (ec *executionContext) marshalNOrder2ᚕᚖrxw1ᚋgatewaysvcᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4271,7 +4271,7 @@ func (ec *executionContext) marshalNOrder2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋm
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOrder2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrder(ctx, sel, v[i])
+			ret[i] = ec.marshalNOrder2ᚖrxw1ᚋgatewaysvcᚋmodelᚐOrder(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4291,7 +4291,7 @@ func (ec *executionContext) marshalNOrder2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋm
 	return ret
 }
 
-func (ec *executionContext) marshalNOrder2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v *model.Order) graphql.Marshaler {
+func (ec *executionContext) marshalNOrder2ᚖrxw1ᚋgatewaysvcᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v *model.Order) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4301,7 +4301,7 @@ func (ec *executionContext) marshalNOrder2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmode
 	return ec._Order(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProduct2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2ᚕᚖrxw1ᚋgatewaysvcᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4325,7 +4325,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖrxw1ᚋgatewaysvcᚋinternal�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProduct2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐProduct(ctx, sel, v[i])
+			ret[i] = ec.marshalNProduct2ᚖrxw1ᚋgatewaysvcᚋmodelᚐProduct(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4345,7 +4345,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖrxw1ᚋgatewaysvcᚋinternal�
 	return ret
 }
 
-func (ec *executionContext) marshalNProduct2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2ᚖrxw1ᚋgatewaysvcᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4371,11 +4371,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNTime2rxw1ᚋgatewaysvcᚋinternalᚋmodelᚐTime(ctx context.Context, sel ast.SelectionSet, v model.Time) graphql.Marshaler {
+func (ec *executionContext) marshalNTime2rxw1ᚋgatewaysvcᚋmodelᚐTime(ctx context.Context, sel ast.SelectionSet, v model.Time) graphql.Marshaler {
 	return ec._Time(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTime2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐTime(ctx context.Context, sel ast.SelectionSet, v *model.Time) graphql.Marshaler {
+func (ec *executionContext) marshalNTime2ᚖrxw1ᚋgatewaysvcᚋmodelᚐTime(ctx context.Context, sel ast.SelectionSet, v *model.Time) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4385,7 +4385,7 @@ func (ec *executionContext) marshalNTime2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodel
 	return ec._Time(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖrxw1ᚋgatewaysvcᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4409,7 +4409,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖrxw1ᚋgatewaysvcᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4429,7 +4429,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖrxw1ᚋgatewaysvcᚋinternalᚋmo
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖrxw1ᚋgatewaysvcᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4722,14 +4722,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOOrder2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v *model.Order) graphql.Marshaler {
+func (ec *executionContext) marshalOOrder2ᚖrxw1ᚋgatewaysvcᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v *model.Order) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Order(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOProduct2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalOProduct2ᚖrxw1ᚋgatewaysvcᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4754,7 +4754,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖrxw1ᚋgatewaysvcᚋinternalᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖrxw1ᚋgatewaysvcᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

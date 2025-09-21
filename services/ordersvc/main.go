@@ -2,31 +2,17 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"slices"
-	"strings"
 	"time"
 
 	"rxw1/logging"
-	"rxw1/ordersvc/internal/flags"
-	"rxw1/ordersvc/internal/graphql"
-	"rxw1/ordersvc/internal/mongo"
-	mynats "rxw1/ordersvc/internal/nats"
+	"rxw1/ordersvc/order"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
-	"github.com/99designs/gqlgen/graphql/handler/lru"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"github.com/gorilla/websocket"
 	"github.com/nats-io/nats.go"
-	"github.com/vektah/gqlparser/v2/ast"
 )
 
 func main() {
@@ -49,10 +35,10 @@ func main() {
 	logger.Info("boot", "pid", os.Getpid())
 
 	// Flags
-	ff := flags.New()
+	ff := order.New()
 
 	// MongoDB
-	mo, err := mongo.Connect(ctx, os.Getenv("MONGO_URI"))
+	mo, err := order.Connect(ctx, os.Getenv("MONGO_URI"))
 	if err != nil {
 		logging.From(ctx).Error("", "error", err.Error())
 		os.Exit(1)
@@ -67,79 +53,19 @@ func main() {
 	defer nc.Drain()
 
 	// Subscribers
-	sub, err := mynats.SubscribeToOrdersCreated(ctx, nc, mo, ff)
+	sub, err := order.SubscribeToOrdersCreated(ctx, nc, mo, ff)
 	if err != nil {
 		logging.From(ctx).Error("", "error", err.Error())
 		os.Exit(1)
 	}
 	defer sub.Unsubscribe()
 
-	sub2, err := mynats.SubscribeToOrdersRequested(ctx, nc, mo, ff)
+	sub2, err := order.SubscribeToOrdersRequested(ctx, nc, mo, ff)
 	if err != nil {
 		logging.From(ctx).Error("", "error", err.Error())
 		os.Exit(1)
 	}
 	defer sub2.Unsubscribe()
-
-	res := &graphql.Resolver{MO: mo, NC: nc, FF: ff}
-	srv := handler.New(graphql.NewExecutableSchema(graphql.Config{Resolvers: res}))
-
-	// Websockets
-	srv.AddTransport(transport.Websocket{
-		KeepAlivePingInterval: 10 * time.Second,
-		Upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				origin := r.Header.Get("Origin")
-				if origin == "" { // no origin header, likely same-origin or non-browser
-					return true
-				}
-
-				// Allowed origins from env (comma-separated). Defaults cover local dev.
-				allowedFromEnv := strings.TrimSpace(os.Getenv("WS_ALLOWED_ORIGINS"))
-				var allowedOrigins []string
-				if allowedFromEnv != "" {
-					parts := strings.Split(allowedFromEnv, ",")
-					for _, p := range parts {
-						p = strings.TrimSpace(p)
-						if p != "" {
-							allowedOrigins = append(allowedOrigins, p)
-						}
-					}
-				} else {
-					allowedOrigins = []string{
-						"http://localhost:3000",
-						"http://localhost:3001",
-					}
-				}
-
-				// Always allow if the Origin host matches the request host (same host/port).
-				if u, err := url.Parse(origin); err == nil {
-					if u.Host == r.Host {
-						fmt.Printf("Allowed same-host origin: %s\n", origin)
-						return true
-					}
-				}
-
-				if slices.Contains(allowedOrigins, origin) {
-					fmt.Printf("Allowed origin: %s\n", origin)
-					return true
-				}
-				fmt.Printf("Blocked origin: %s (set WS_ALLOWED_ORIGINS to override)\n", origin)
-				return false
-			},
-		},
-	})
-
-	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
-
-	srv.AddTransport(transport.Options{}) // For the playground
-	srv.AddTransport(transport.GET{})
-	srv.AddTransport(transport.POST{}) // Must be after the WebSocket transport
-
-	srv.Use(extension.Introspection{}) // For running gqlgen
-	srv.Use(extension.AutomaticPersistedQuery{
-		Cache: lru.New[string](100),
-	})
 
 	// Chi
 	r := chi.NewRouter()
@@ -154,8 +80,10 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	r.Handle("/", playground.Handler("GraphQL", "/graphql"))
-	r.Handle("/graphql", srv)
+	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
 
 	// Start server
 	err = http.ListenAndServe(":8081", r)

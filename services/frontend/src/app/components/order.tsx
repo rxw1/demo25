@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import { FetchOrdersDocument, Order } from "../__generated__/graphql";
+import { OrdersDocument, Order } from "../__generated__/graphql";
 
 const Q = gql`
   query Orders {
@@ -18,7 +18,7 @@ type Data = {
 }
 
 export default function Orders({}) {
-  const { data } = useQuery<Data>(FetchOrdersDocument, {})
+  const { data } = useQuery<Data>(OrdersDocument, {})
 
   return (
     <div style={{ width: "var(--width)" }}>
