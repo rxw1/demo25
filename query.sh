@@ -1,10 +1,12 @@
 #!/usr/bin/env zsh
 
-q=${1:-'query {products{id}}'}
+port=8080
+url=http://localhost:${port}/graphql
+query=${1:-'query {products{id}}'}
 
 set +x
-curl -s --request POST \
+curl --request POST \
   --header 'content-type: application/json' \
-  --url http://localhost:4000/ \
-  --data '{"query":'${(qqq)q}'}'
+  --url $url \
+  --data '{"query":'${(qqq)query}'}'
 set -x

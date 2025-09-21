@@ -2,23 +2,25 @@
 FROM golang:latest AS build
 WORKDIR /src
 
-# Workspace-aware dependency caching
 COPY go.work ./
+
+# Workspace-aware dependency caching
 COPY pkg/logging/go.mod ./pkg/logging/
-COPY services/ordersvc/go.mod ./services/ordersvc/
-COPY services/productsvc/go.mod ./services/productsvc/
 COPY services/gatewaysvc/go.mod ./services/gatewaysvc/
+COPY services/productsvc/go.mod ./services/productsvc/
+COPY services/ordersvc/go.mod ./services/ordersvc/
 COPY tests/e2e/go.mod ./tests/e2e/
 
-# Download deps for ordersvc
+# Download dependencies
 WORKDIR /src/services/ordersvc
 RUN go mod download
 
 # Copy sources
 WORKDIR /src
 COPY pkg/logging/ ./pkg/logging/
-COPY services/ordersvc/ ./services/ordersvc/
+COPY services/gatewaysvc/ ./services/gatewaysvc/
 COPY services/productsvc/ ./services/productsvc/
+COPY services/ordersvc/ ./services/ordersvc/
 
 # Build
 WORKDIR /src/services/ordersvc

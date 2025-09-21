@@ -1,6 +1,6 @@
 // https://github.com/golang-migrate/migrate
 
-package product
+package db
 
 import (
 	"context"

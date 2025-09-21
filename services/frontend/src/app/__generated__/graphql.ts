@@ -58,7 +58,6 @@ export type Product = {
 export type Query = {
   __typename?: 'Query';
   currentTime: Time;
-  getPrice: Scalars['Int']['output'];
   isCacheEnabled: Scalars['Boolean']['output'];
   isThrottlingEnabled: Scalars['Boolean']['output'];
   orderById?: Maybe<Order>;
@@ -68,11 +67,6 @@ export type Query = {
   products: Array<Product>;
   userById?: Maybe<User>;
   users: Array<User>;
-};
-
-
-export type QueryGetPriceArgs = {
-  productId: Scalars['ID']['input'];
 };
 
 

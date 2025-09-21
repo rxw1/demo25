@@ -1,4 +1,4 @@
-package order
+package handle
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"rxw1/logging"
+	"rxw1/ordersvc/internal/db"
+	"rxw1/ordersvc/internal/flags"
 
 	"github.com/nats-io/nats.go"
 )
@@ -18,7 +20,7 @@ type Event struct {
 	Qty       int
 }
 
-func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, mo *Store, ff *Flags) (*nats.Subscription, error) {
+func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, mo *db.Store, ff *flags.Flags) (*nats.Subscription, error) {
 	// ctx = logging.With(ctx, "fn", "SubscribeToOrdersCreated", "package", "nats")
 
 	sub, err := nc.Subscribe("order.created", func(m *nats.Msg) {
@@ -54,7 +56,7 @@ func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, mo *Store, ff 
 	return sub, err
 }
 
-func SubscribeToOrdersRequested(ctx context.Context, nc *nats.Conn, mo *Store, ff *Flags) (*nats.Subscription, error) {
+func SubscribeToOrdersRequested(ctx context.Context, nc *nats.Conn, mo *db.Store, ff *flags.Flags) (*nats.Subscription, error) {
 	ctx = logging.With(ctx, "fn", "SubscribeToOrdersRequested", "pkg", "NATS")
 	sub, err := nc.Subscribe("orders.all", func(m *nats.Msg) {
 		res, err := mo.GetAllOrders(ctx)

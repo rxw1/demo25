@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"rxw1/logging"
-	"rxw1/ordersvc/order"
+	"rxw1/ordersvc/internal/db"
+	"rxw1/ordersvc/internal/flags"
+	"rxw1/ordersvc/internal/handle"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -35,10 +37,10 @@ func main() {
 	logger.Info("boot", "pid", os.Getpid())
 
 	// Flags
-	ff := order.New()
+	ff := flags.New()
 
 	// MongoDB
-	mo, err := order.Connect(ctx, os.Getenv("MONGO_URI"))
+	mo, err := db.Connect(ctx, os.Getenv("MONGO_URI"))
 	if err != nil {
 		logging.From(ctx).Error("", "error", err.Error())
 		os.Exit(1)
@@ -53,14 +55,14 @@ func main() {
 	defer nc.Drain()
 
 	// Subscribers
-	sub, err := order.SubscribeToOrdersCreated(ctx, nc, mo, ff)
+	sub, err := handle.SubscribeToOrdersCreated(ctx, nc, mo, ff)
 	if err != nil {
 		logging.From(ctx).Error("", "error", err.Error())
 		os.Exit(1)
 	}
 	defer sub.Unsubscribe()
 
-	sub2, err := order.SubscribeToOrdersRequested(ctx, nc, mo, ff)
+	sub2, err := handle.SubscribeToOrdersRequested(ctx, nc, mo, ff)
 	if err != nil {
 		logging.From(ctx).Error("", "error", err.Error())
 		os.Exit(1)

@@ -2,7 +2,7 @@
 /// Migrations using golang-migrate with embedded migrations
 /// Migrations are run automatically if AUTO_MIGRATE env is "true"
 
-package product
+package db
 
 import (
 	"context"
