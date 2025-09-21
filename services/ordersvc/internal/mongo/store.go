@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"rxw1/logging"
@@ -25,20 +24,18 @@ type Order struct {
 type Store struct{ C *mongo.Collection }
 
 func Connect(ctx context.Context, uri string) (*Store, error) {
-	ctx2 := logging.With(ctx, "mongo", "Connect")
-	logging.From(ctx2).Debug("DATABASE MONGO connecting to mongo", "uri", uri)
 	cli, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		return nil, err
 	}
-	logging.From(ctx2).Debug("mongo connected")
 	return &Store{C: cli.Database("app").Collection("orders")}, nil
 }
 
 func (s *Store) AddOrder(ctx context.Context, eventID, productID string, qty int, createdAt time.Time) error {
-	// ctx2 := logging.With(ctx, "mongo", "AddOrder")
-	fmt.Printf("Adding order: eventID=%s productID=%s qty=%d createdAt=%s\n", eventID, productID, qty, createdAt)
-	// logging.From(ctx2).Debug("DATABASE MONGO creating order", "eventId", eventID, "productId", productID, "qty", qty, "createdAt", createdAt)
+	ctx = logging.With(ctx, "eventID", eventID, "productID", productID, "qty", qty, "createdAt", createdAt)
+
+	logging.From(ctx).Debug("AddOrder")
+
 	res, err := s.C.UpdateOne(ctx,
 		bson.M{"eventId": eventID},
 		bson.M{
@@ -50,21 +47,20 @@ func (s *Store) AddOrder(ctx context.Context, eventID, productID string, qty int
 				"createdAt": createdAt,
 			},
 		}, options.Update().SetUpsert(true))
-	fmt.Printf("AddOrder result: %+v, error: %v\n", res, err)
-	// logging.From(ctx2).Debug("DATABASE MONGO upsert result", "result", res, "error", err)
+	logging.From(ctx).Debug("result", "res", res, "err", err)
 	return err
 }
 
 func (s *Store) GetAllOrders(ctx context.Context) ([]Order, error) {
-	ctx2 := logging.With(ctx, "mongo", "GetAllOrders")
+	ctx = logging.With(ctx, "mongo", "GetAllOrders")
 	cur, err := s.C.Find(ctx, bson.M{})
 	if err != nil {
-		logging.From(ctx2).Error("DATABASE MONGO failed to find orders", "error", err)
+		logging.From(ctx).Error("DATABASE MONGO failed to find orders", "error", err)
 		return nil, err
 	}
 	var orders []Order
 	if err := cur.All(ctx, &orders); err != nil {
-		logging.From(ctx2).Error("DATABASE MONGO failed to decode orders", "error", err)
+		logging.From(ctx).Error("DATABASE MONGO failed to decode orders", "error", err)
 		return nil, err
 	}
 	return orders, nil

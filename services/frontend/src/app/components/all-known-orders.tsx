@@ -5,7 +5,9 @@ const shortId = (id: string) => id.slice(6, 9 + 2)
 export default function AllKnownOrders({ orders }: { orders: Order[] }) {
   return (
     <div>
-      <h4>Latest Orders</h4>
+      <h4>Last Orders</h4>
+<div>
+            <button onClick={() => localStorage.clear()}>Clear LocalStorage</button></div>
       <div style={{}}>
         {orders.map((o) => (
           <div

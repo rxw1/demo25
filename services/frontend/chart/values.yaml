@@ -4,7 +4,7 @@ image:
   pullPolicy: IfNotPresent
 service:
   port: 80
-  targetPort: 3000
+  targetPort: 8088
   type: ClusterIP
 env:
   GRAPHQL_URL: http://productsvc.app.svc.cluster.local/graphql

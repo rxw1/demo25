@@ -1,7 +1,7 @@
+//go:generate go run github.com/99designs/gqlgen generate
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,11 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"rxw1/gatewaysvc/internal/cache"
+	"rxw1/gatewaysvc/internal/flags"
+	"rxw1/gatewaysvc/internal/graphql"
 	"rxw1/logging"
-	"rxw1/ordersvc/internal/flags"
-	"rxw1/ordersvc/internal/graphql"
-	"rxw1/ordersvc/internal/mongo"
-	mynats "rxw1/ordersvc/internal/nats"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -26,6 +25,8 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/gorilla/websocket"
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/redis/go-redis/v9"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -44,44 +45,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ctx := logging.Into(context.Background(), logger)
+	// ctx := logging.Into(context.Background(), logger)
 
 	logger.Info("boot", "pid", os.Getpid())
-
-	// Flags
-	ff := flags.New()
-
-	// MongoDB
-	mo, err := mongo.Connect(ctx, os.Getenv("MONGO_URI"))
-	if err != nil {
-		logging.From(ctx).Error("", "error", err.Error())
-		os.Exit(1)
-	}
 
 	// NATS
 	nc, err := nats.Connect(os.Getenv("NATS_URL"))
 	if err != nil {
-		logging.From(ctx).Error("", "error", err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	defer nc.Drain()
 
-	// Subscribers
-	sub, err := mynats.SubscribeToOrdersCreated(ctx, nc, mo, ff)
+	// Jetstream
+	_, err = jetstream.New(nc)
 	if err != nil {
-		logging.From(ctx).Error("", "error", err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
-	defer sub.Unsubscribe()
 
-	sub2, err := mynats.SubscribeToOrdersRequested(ctx, nc, mo, ff)
-	if err != nil {
-		logging.From(ctx).Error("", "error", err.Error())
-		os.Exit(1)
-	}
-	defer sub2.Unsubscribe()
+	// Redis
+	rc := cache.New(os.Getenv("REDIS_ADDR"))
+	_ = redis.NewClient // keep import
 
-	res := &graphql.Resolver{MO: mo, NC: nc, FF: ff}
+	// Flags
+	ff := flags.New()
+
+	// GraphQL
+	res := &graphql.Resolver{NC: nc, RC: rc, FF: ff}
 	srv := handler.New(graphql.NewExecutableSchema(graphql.Config{Resolvers: res}))
 
 	// Websockets
@@ -138,10 +127,9 @@ func main() {
 
 	srv.Use(extension.Introspection{}) // For running gqlgen
 	srv.Use(extension.AutomaticPersistedQuery{
-		Cache: lru.New[string](100),
+		Cache: lru.New[string](100), // From default config
 	})
 
-	// Chi
 	r := chi.NewRouter()
 
 	// CORS
@@ -157,13 +145,12 @@ func main() {
 	r.Handle("/", playground.Handler("GraphQL", "/graphql"))
 	r.Handle("/graphql", srv)
 
-	// Start server
-	err = http.ListenAndServe(":8081", r)
+	logger.Info("gateway up", "port", "8080")
+	err = http.ListenAndServe(":8080", r)
 	if err != nil {
-		logging.From(ctx).Error("ordersvc up", "port", ":8081")
+		logger.Error("http", "err", err)
 		os.Exit(1)
 	}
-	logging.From(ctx).Info("ordersvc up", "port", ":8081")
 }
 
 func getenv(k, def string) string {

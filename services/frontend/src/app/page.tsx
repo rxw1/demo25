@@ -12,10 +12,9 @@ import { createClient } from "graphql-ws";
 import Comp1 from "./components/comp1";
 
 export const graphQLEndpoint =
-    process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:4000/graphql"
+    process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:8080/graphql"
 
 const wsUrl = graphQLEndpoint.replace(/^http/, "ws")
-//const wsUrl = "ws://localhost:4000/graphql"
 
 const httpLink = new HttpLink({
     uri: graphQLEndpoint,

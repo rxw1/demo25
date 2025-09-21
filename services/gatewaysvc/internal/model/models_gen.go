@@ -14,8 +14,24 @@ type Order struct {
 	Price     int32  `json:"price"`
 }
 
+type Product struct {
+	ID    string `json:"id"`
+	Price int32  `json:"price"`
+	Name  string `json:"name"`
+}
+
 type Query struct {
 }
 
 type Subscription struct {
+}
+
+type Time struct {
+	UnixTime  int32  `json:"unixTime"`
+	TimeStamp string `json:"timeStamp"`
+}
+
+type User struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }

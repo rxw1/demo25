@@ -30,6 +30,20 @@ services:
       - ./flagd/flags.json:/etc/flagd/flags.json:ro
     ports: ["8013:8013"]
 
+  gatewaysvc:
+    build:
+      context: ..
+      dockerfile: services/gatewaysvc/Dockerfile
+    restart: always
+    environment:
+      - NATS_URL=nats://nats:4222
+      - FLAGD_HOST=flagd
+      - FLAGD_PORT=8013
+      - LOG_LEVEL=debug
+      - BUILD_VERSION=${BUILD_VERSION:-dev}
+    depends_on: [redis, nats, flagd]
+    ports: ["8080:8080"]
+
   productsvc:
     build:
       context: ..
@@ -45,7 +59,7 @@ services:
       - REDIS_ADDR=redis:6379
       - BUILD_VERSION=${BUILD_VERSION:-dev}
     depends_on: [postgres, redis, nats, flagd]
-    ports: ["8080:8080"]
+    ports: ["8081:8081"]
 
   ordersvc:
     build:
@@ -58,5 +72,6 @@ services:
       - LOG_LEVEL=debug
       - MONGO_URI=mongodb://mongo:27017
       - NATS_URL=nats://nats:4222
+      - BUILD_VERSION=${BUILD_VERSION:-dev}
     depends_on: [mongo, nats, flagd]
-    ports: ["8081:8081"]
+    ports: ["8082:8082"]

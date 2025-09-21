@@ -3,7 +3,6 @@ package nats
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/rand/v2"
 	"time"
 
@@ -30,34 +29,37 @@ type Order struct {
 }
 
 func SubscribeToOrdersCreated(ctx context.Context, nc *nats.Conn, mo *mongo.Store, ff *flags.Flags) (*nats.Subscription, error) {
-	ctx = logging.With(ctx, "fn", "SubscribeToOrdersCreated", "pkg", "NATS")
+	// ctx = logging.With(ctx, "fn", "SubscribeToOrdersCreated", "package", "nats")
+
 	sub, err := nc.Subscribe("order.created", func(m *nats.Msg) {
+		// ctx = logging.With(ctx, "fn", "Subscribe", "package", "nats")
 		var e Event
 		if json.Unmarshal(m.Data, &e) != nil {
-			logging.From(ctx).Error("EVENT failed to unmarshal event", "data", string(m.Data))
-			return
+			logging.From(ctx).Error("failed to unmarshal event", "data", string(m.Data))
+			return // return nothing = skip message
 		}
 
 		ts, err := time.Parse(time.RFC3339, e.CreatedAt)
 		if err != nil {
-			logging.From(ctx).Error("EVENT failed to parse time", "error", err, "createdAt", e.CreatedAt)
+			logging.From(ctx).Error("failed to parse time", "error", err, "time", e.CreatedAt)
 			return
 		}
 
-		logging.From(ctx).Info("EVENT received order created", "eventId", e.ID, "productId", e.ProductID, "qty", e.Qty, "createdAt", e.CreatedAt)
+		logging.From(ctx).Info("event", "eventId", e.ID, "productId", e.ProductID, "qty", e.Qty, "createdAt", e.CreatedAt)
 
 		if ff.ThrottleEnabled(ctx) {
-			logging.From(ctx).Info("throttling enabled, sleeping")
-			time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
+			t := time.Duration(rand.IntN(500)) * time.Millisecond
+			logging.From(ctx).Info("throttling enabled, sleeping", "t", t)
+			time.Sleep(t)
 		}
 
 		err = mo.AddOrder(ctx, e.ID, e.ProductID, e.Qty, ts)
 		if err != nil {
-			logging.From(ctx).Error("EVENT failed to add order", "error", err)
+			logging.From(ctx).Error("failed to add order to mongodb", "error", err)
 			return
 		}
 
-		fmt.Printf("order created: %+v\n", e)
+		logging.From(ctx).Info("order created", "event", e, "error", err)
 	})
 	return sub, err
 }

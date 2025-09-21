@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"rxw1/productsvc/internal/flags"
+	"rxw1/gatewaysvc/internal/flags"
 )
 
 func TestFlags_RedisEnabled(t *testing.T) {

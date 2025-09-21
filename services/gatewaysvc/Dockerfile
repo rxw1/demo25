@@ -7,25 +7,25 @@ WORKDIR /src
 COPY go.work ./
 # Copy go.mod for ALL modules listed in go.work so workspace validation passes
 COPY pkg/logging/go.mod ./pkg/logging/
+COPY services/gatewaysvc/go.mod ./services/gatewaysvc/
 COPY services/productsvc/go.mod ./services/productsvc/
 COPY services/ordersvc/go.mod ./services/ordersvc/
-COPY services/gatewaysvc/go.mod ./services/gatewaysvc/
 COPY tests/e2e/go.mod ./tests/e2e/
 
 # 2) Download deps for productsvc in workspace context
-WORKDIR /src/services/productsvc
+WORKDIR /src/services/gatewaysvc
 RUN go mod download
 
 # 3) Copy only the needed source trees
 WORKDIR /src
 COPY pkg/logging/ ./pkg/logging/
-COPY services/productsvc/ ./services/productsvc/
+COPY services/gatewaysvc/ ./services/gatewaysvc/
 
 # 4) Build productsvc
-WORKDIR /src/services/productsvc
-RUN go generate ./... && CGO_ENABLED=0 go build -o /out/productsvc .
+WORKDIR /src/services/gatewaysvc
+RUN go generate ./... && CGO_ENABLED=0 go build -o /out/gatewaysvc .
 
 FROM gcr.io/distroless/base-debian12
-COPY --from=build /out/productsvc /productsvc
-EXPOSE 8081
-ENTRYPOINT ["/productsvc"]
+COPY --from=build /out/gatewaysvc /gatewaysvc
+EXPOSE 8080
+ENTRYPOINT ["/gatewaysvc"]

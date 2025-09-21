@@ -7,6 +7,7 @@ COPY go.work ./
 COPY pkg/logging/go.mod ./pkg/logging/
 COPY services/ordersvc/go.mod ./services/ordersvc/
 COPY services/productsvc/go.mod ./services/productsvc/
+COPY services/gatewaysvc/go.mod ./services/gatewaysvc/
 COPY tests/e2e/go.mod ./tests/e2e/
 
 # Download deps for ordersvc
@@ -25,6 +26,6 @@ RUN CGO_ENABLED=0 go build -o /out/ordersvc .
 
 FROM gcr.io/distroless/base-debian12
 COPY --from=build /out/ordersvc /ordersvc
-EXPOSE 8081
+EXPOSE 8082
 ENTRYPOINT ["/ordersvc"]
 

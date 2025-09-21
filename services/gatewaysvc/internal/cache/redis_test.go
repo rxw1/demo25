@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"rxw1/productsvc/internal/cache"
+	"rxw1/gatewaysvc/internal/cache"
 )
 
 func TestCache_Get(t *testing.T) {

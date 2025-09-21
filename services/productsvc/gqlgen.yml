@@ -16,13 +16,12 @@ resolver:
   dir: internal/graphql
   filename_template: "{name}.resolvers.go"
 
-federation:
-  filename: internal/graphql/federation.go
-  package: graphql
-  version: 2
-  options:
-    computed_requires: true
-
+# federation:
+#   filename: internal/graphql/federation.go
+#   package: graphql
+#   version: 2
+#   options:
+#     computed_requires: true
 
 call_argument_directives_with_null: true
 

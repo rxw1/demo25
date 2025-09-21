@@ -1,4 +1,5 @@
 SHELL=/bin/zsh
+MAKEFLAGS += --no-print-directory
 
 GIT_TAG=$(shell git describe --tags --abbrev=0)
 GIT_COMMIT=$(shell git rev-parse --short HEAD)
@@ -7,13 +8,18 @@ VERSION="$(GIT_TAG)-$(GIT_COMMIT)"
 
 #############################################################################
 
-COMPOSE_FILE=infra/compose.dev.yml
+default: gql $(SERVICES)
 
-default: up
+#############################################################################
 
 #COMPOSE_PLAIN=--progress plain
+COMPOSE_FILE=infra/compose.dev.yml
+SERVICES := gatewaysvc productsvc ordersvc
 
-.PHONY: dev-up
+.PHONY: $(SERVICES)
+$(SERVICES):
+	BUILD_VERSION=$(VERSION) COMPOSE_BAKE=true docker compose $(COMPOSE_PLAIN) -f $(COMPOSE_FILE) up --detach --build $@
+
 up: dev-up
 dev-up:
 	BUILD_VERSION=$(VERSION) COMPOSE_BAKE=true docker compose $(COMPOSE_PLAIN) -f $(COMPOSE_FILE) up --detach --build
@@ -52,6 +58,7 @@ k3d-prune:
 .PHONY: install
 install:
 	$(MAKE) -C infra install
+	$(MAKE) -C services/gatewaysvc build import install
 	$(MAKE) -C services/productsvc build import install
 	$(MAKE) -C services/ordersvc build import install
 	$(MAKE) -C services/frontend build import install
@@ -59,6 +66,7 @@ install:
 .PHONY: upgrade
 upgrade:
 	$(MAKE) -C infra upgrade
+	$(MAKE) -C services/gatewaysvc build import upgrade
 	$(MAKE) -C services/productsvc build import upgrade
 	$(MAKE) -C services/ordersvc build import upgrade
 	$(MAKE) -C services/frontend build import upgrade
@@ -68,6 +76,7 @@ uninstall:
 	$(MAKE) -C services/frontend uninstall
 	$(MAKE) -C services/ordersvc uninstall
 	$(MAKE) -C services/productsvc uninstall
+	$(MAKE) -C services/gatewaysvc uninstall
 	$(MAKE) -C infra uninstall
 
 #############################################################################
@@ -75,13 +84,13 @@ uninstall:
 .PHONY: graphql
 gql: graphql
 graphql:
-	$(MAKE) -C services/productsvc gqlgen
-	$(MAKE) -C services/ordersvc gqlgen
+	$(MAKE) -C services/gatewaysvc gqlgen
 	$(MAKE) -C services/frontend codegen
 
 .PHONY: lint
 lint:
 	$(MAKE) -C infra lint
+	$(MAKE) -C services/gatewaysvc lint
 	$(MAKE) -C services/productsvc lint
 	$(MAKE) -C services/ordersvc lint
 	$(MAKE) -C services/frontend lint
@@ -100,4 +109,4 @@ frontend:
 
 .PHONY: logs
 logs:
-	docker compose -f infra/compose.dev.yml logs -fn10 {product,order}svc
+	docker compose -f $(COMPOSE_FILE) logs -fn10 $(SERVICES)
