@@ -8,21 +8,20 @@ VERSION="$(GIT_TAG)-$(GIT_COMMIT)"
 
 #############################################################################
 
-default: gql $(SERVICES)
-
-#############################################################################
-
 #COMPOSE_PLAIN=--progress plain
+PROJECT_NAME=infra
 COMPOSE_FILE=infra/compose.dev.yml
 SERVICES := gatewaysvc productsvc ordersvc
 
+default: gql $(SERVICES)
+
 .PHONY: $(SERVICES)
 $(SERVICES):
-	BUILD_VERSION=$(VERSION) COMPOSE_BAKE=true docker compose $(COMPOSE_PLAIN) -f $(COMPOSE_FILE) up --detach --build $@
+	BUILD_VERSION=$(VERSION) COMPOSE_BAKE=true docker compose $(COMPOSE_PLAIN) -p $(PROJECT_NAME) -f $(COMPOSE_FILE) up --detach --build $@
 
 up: dev-up
 dev-up:
-	BUILD_VERSION=$(VERSION) COMPOSE_BAKE=true docker compose $(COMPOSE_PLAIN) -f $(COMPOSE_FILE) up --detach --build
+	BUILD_VERSION=$(VERSION) COMPOSE_BAKE=true docker compose $(COMPOSE_PLAIN) -p $(PROJECT_NAME) -f $(COMPOSE_FILE) up --detach --build
 
 .PHONY: dev-down
 down: dev-down

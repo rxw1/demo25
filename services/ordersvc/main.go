@@ -90,10 +90,10 @@ func main() {
 	// Start server
 	err = http.ListenAndServe(":8081", r)
 	if err != nil {
-		logging.From(ctx).Error("ordersvc up", "port", ":8081")
+		logging.From(ctx).Error("ordersvc failed to start up", "port", ":8082")
 		os.Exit(1)
 	}
-	logging.From(ctx).Info("ordersvc up", "port", ":8081")
+	logging.From(ctx).Info("ordersvc up", "port", ":8082")
 }
 
 func getenv(k, def string) string {

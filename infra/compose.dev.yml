@@ -31,6 +31,7 @@ services:
     ports: ["8013:8013"]
 
   gatewaysvc:
+    container_name: app-gatewaysvc-1
     build:
       context: ..
       dockerfile: services/gatewaysvc/Dockerfile
@@ -45,6 +46,7 @@ services:
     ports: ["8080:8080"]
 
   productsvc:
+    container_name: app-productsvc-1
     build:
       context: ..
       dockerfile: services/productsvc/Dockerfile
@@ -62,6 +64,7 @@ services:
     ports: ["8081:8081"]
 
   ordersvc:
+    container_name: app-ordersvc-1
     build:
       context: ..
       dockerfile: services/ordersvc/Dockerfile

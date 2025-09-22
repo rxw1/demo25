@@ -1,25 +1,25 @@
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
 const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-})
+    variable: "--font-inter",
+    subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "poc frontend",
-  description: "",
-}
+    title: "poc frontend",
+    description: "",
+};
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode
+    children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
-    </html>
-  )
+    return (
+        <html lang="en">
+            <body className={`${inter.variable} antialiased`}>{children}</body>
+        </html>
+    );
 }

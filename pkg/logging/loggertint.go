@@ -39,13 +39,13 @@ func NewTint(cfg Config) (*slog.Logger, error) {
 	handler := tint.NewHandler(w, hopts)
 	base := slog.New(handler)
 
-	if cfg.Service != "" || cfg.Version != "" || cfg.Environment != "" {
-		base = base.With(
-			slog.String("service", cfg.Service),
-			slog.String("version", cfg.Version),
-			slog.String("env", cfg.Environment),
-		)
-	}
+	// if cfg.Service != "" || cfg.Version != "" || cfg.Environment != "" {
+	// 	base = base.With(
+	// 		slog.String("service", cfg.Service),
+	// 		slog.String("version", cfg.Version),
+	// 		slog.String("env", cfg.Environment),
+	// 	)
+	// }
 
 	if cfg.SetDefault {
 		slog.SetDefault(base)

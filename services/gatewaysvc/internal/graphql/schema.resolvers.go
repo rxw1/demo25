@@ -9,9 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	rand "math/rand/v2"
+	"time"
+
 	"rxw1/gatewaysvc/model"
 	"rxw1/logging"
-	"time"
 
 	nats "github.com/nats-io/nats.go"
 	ulid "github.com/oklog/ulid/v2"
@@ -131,34 +132,25 @@ func (r *queryResolver) OrdersByUserID(ctx context.Context, userID string) ([]*m
 	panic(fmt.Errorf("not implemented: OrdersByUserID - ordersByUserId"))
 }
 
-// Products is the resolver for the products field.
+// Orders is the resolver for the products field.
 func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) {
-	// ctx = logging.With(ctx)
-	// logging.From(ctx).Info("[queryResolver] Products")
+	ctx = logging.With(ctx)
+	logging.From(ctx).Info("[queryResolver] Products")
 
-	//useCache := r.FF.RedisEnabled(ctx)
-	//if useCache {
-	//	if s, err := r.RC.Get(ctx, "products:all"); err == nil {
-	//		var p []*model.Product
-	//		if json.Unmarshal([]byte(s), &p) == nil {
-	//			return p, nil
-	//		}
-	//	}
-	//}
+	msg, err := r.NC.Request("products.all", nil, 2*time.Second)
+	if err != nil {
+		logging.From(ctx).Error("failed to request products", "subject", "products.all", "error", err)
+		return nil, err
+	}
 
-	//rows, err := r.PG.GetProducts(ctx)
-	//if err != nil {
-	//	return nil, err
-	//}
+	var products []*model.Product
+	if err := json.Unmarshal(msg.Data, &products); err != nil {
+		logging.From(ctx).Error("failed to unmarshal products", "error", err)
+		return nil, err
+	}
 
-	//if useCache {
-	//	b, _ := json.Marshal(rows)
-	//	_ = r.RC.Set(ctx, "products:all", string(b), 5*time.Minute)
-	//}
-
-	// logging.From(ctx).Info("fetched products", "count", len(rows))
-	// return rows, nil
-	panic("not implemented")
+	logging.From(ctx).Info("fetched products", "count", len(products))
+	return products, nil
 }
 
 // ProductByID is the resolver for the productById field.
@@ -240,6 +232,8 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
+type (
+	mutationResolver     struct{ *Resolver }
+	queryResolver        struct{ *Resolver }
+	subscriptionResolver struct{ *Resolver }
+)

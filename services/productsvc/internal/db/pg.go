@@ -21,9 +21,6 @@ type PG struct {
 func Connect(ctx context.Context, url string) (*PG, error) {
 	logging.From(ctx).Info("pg connect", "url", url)
 
-	// ctx2 := logging.With(ctx)
-	logging.From(ctx).Info("pg connect", "url", url)
-
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
 		logging.From(ctx).Error("pg connect", "err", err)
@@ -35,24 +32,22 @@ func Connect(ctx context.Context, url string) (*PG, error) {
 }
 
 func (p *PG) GetProduct(ctx context.Context, id string) (*model.Product, error) {
-	ctx2 := logging.With(ctx)
-	logging.From(ctx2).Info("pg get product", "id", id)
-
+	logging.From(ctx).Info("pg get product", "id", id)
 	row := p.Pool.QueryRow(ctx, `select id, name, price from products where id=$1`, id)
 
 	var pid, name string
 	var price int
 	if err := row.Scan(&pid, &name, &price); err != nil {
 		if err == pgx.ErrNoRows {
-			logging.From(ctx2).Warn("pg get product", "id", id, "status", "no rows")
+			logging.From(ctx).Warn("pg get product", "id", id, "status", "no rows")
 			return nil, nil // return nil if not found
 		}
 
-		logging.From(ctx2).Error("pg get product", "id", id, "err", err)
+		logging.From(ctx).Error("pg get product", "id", id, "err", err)
 		return nil, err
 	}
 
-	logging.From(ctx2).Info("pg get product", "id", pid, "name", name, "price", price)
+	logging.From(ctx).Info("pg get product", "id", pid, "name", name, "price", price)
 	return &model.Product{
 		ID:    pid,
 		Name:  name,
@@ -61,8 +56,7 @@ func (p *PG) GetProduct(ctx context.Context, id string) (*model.Product, error) 
 }
 
 func (p *PG) GetProducts(ctx context.Context) ([]*model.Product, error) {
-	ctx2 := logging.With(ctx)
-	logging.From(ctx2).Info("pg get products")
+	logging.From(ctx).Info("pg get products")
 
 	rows, err := p.Pool.Query(ctx, `select id, name, price from products`)
 	if err != nil {
@@ -76,7 +70,7 @@ func (p *PG) GetProducts(ctx context.Context) ([]*model.Product, error) {
 		product := &model.Product{}
 		var price int
 		if err := rows.Scan(&product.ID, &product.Name, &price); err != nil {
-			logging.From(ctx2).Error("pg get products", "err", err)
+			logging.From(ctx).Error("pg get products", "err", err)
 			return nil, err
 		}
 		product.Price = int32(price)
@@ -87,6 +81,6 @@ func (p *PG) GetProducts(ctx context.Context) ([]*model.Product, error) {
 		return nil, err
 	}
 
-	logging.From(ctx2).Info("pg get products", "count", len(products))
+	logging.From(ctx).Info("pg get products", "count", len(products))
 	return products, nil
 }

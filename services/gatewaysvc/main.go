@@ -35,7 +35,7 @@ func main() {
 		Level:       getenv("LOG_LEVEL", "debug"),
 		JSON:        getenv("LOG_FORMAT", "json") == "json",
 		AddSource:   getenv("LOG_SOURCE", "true") == "true",
-		Service:     "productsvc",
+		Service:     "gatewaysvc",
 		Version:     getenv("BUILD_VERSION", "dev"),
 		Environment: getenv("ENV", "dev"),
 		SetDefault:  true,

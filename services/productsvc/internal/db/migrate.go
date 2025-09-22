@@ -19,18 +19,19 @@ import (
 // Migrate runs all up migrations from the embedded migrations directory.
 // Call this before creating your pgx pool (see: services/productsvc/main.go).
 func Migrate(ctx context.Context, databaseURL string, migrationsFS embed.FS) error {
-	ctx2 := logging.With(ctx)
-	logging.From(ctx2).Info("migrate", "databaseURL", databaseURL)
+	logging.From(ctx).Info("migrate", "databaseURL", databaseURL)
 
 	// open a database/sql DB (required by golang-migrate database driver)
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
+		logging.From(ctx).Error("open sql db", "error", err)
 		return fmt.Errorf("open sql db: %w", err)
 	}
 	defer db.Close()
 
 	drv, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
+		logging.From(ctx).Error("create postgres driver", "error", err)
 		return fmt.Errorf("postgres driver: %w", err)
 	}
 
