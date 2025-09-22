@@ -39,13 +39,13 @@ dev-prune:
 CLUSTER_NAME=poc
 
 .PHONY: k3d-up
-k3d-up:
 start: k3d-up
+k3d-up:
 	k3d cluster create $(CLUSTER_NAME) -c infra/cluster.yaml
 
 .PHONY: k3d-down
-k3d-down:
 stop: k3d-down
+k3d-down:
 	k3d cluster delete $(CLUSTER_NAME)
 
 .PHONY: k3d-prune

@@ -6,9 +6,9 @@ import (
 	"math/rand/v2"
 	"time"
 
+	"rxw1/flags"
 	"rxw1/logging"
 	"rxw1/ordersvc/internal/db"
-	"rxw1/ordersvc/internal/flags"
 
 	"github.com/nats-io/nats.go"
 )

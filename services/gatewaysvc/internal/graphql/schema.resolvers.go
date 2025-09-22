@@ -9,10 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	rand "math/rand/v2"
-	"time"
-
-	"rxw1/gatewaysvc/model"
 	"rxw1/logging"
+	"rxw1/model"
+	"time"
 
 	nats "github.com/nats-io/nats.go"
 	ulid "github.com/oklog/ulid/v2"
@@ -232,8 +231,6 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
-type (
-	mutationResolver     struct{ *Resolver }
-	queryResolver        struct{ *Resolver }
-	subscriptionResolver struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

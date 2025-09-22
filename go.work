@@ -1,7 +1,9 @@
 go 1.25.0
 
 use (
+	./pkg/flags
 	./pkg/logging
+	./pkg/model
 	./services/gatewaysvc
 	./services/ordersvc
 	./services/productsvc

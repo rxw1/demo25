@@ -7,6 +7,7 @@ services:
 
   postgres:
     image: bitnamisecure/postgresql:latest
+    container_name: infra-postgresql-1
     environment:
       - POSTGRESQL_USERNAME=app
       - POSTGRESQL_PASSWORD=app
@@ -15,10 +16,12 @@ services:
 
   mongo:
     image: bitnamisecure/mongodb:latest
+    container_name: infra-mongodb-1
     ports: ["27017:27017"]
 
   redis:
     image: bitnamisecure/redis:latest
+    container_name: infra-redis-1
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     ports: ["6379:6379"]

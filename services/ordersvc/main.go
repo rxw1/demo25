@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
+	"rxw1/flags"
 	"rxw1/logging"
 	"rxw1/ordersvc/internal/db"
-	"rxw1/ordersvc/internal/flags"
 	"rxw1/ordersvc/internal/handle"
 
 	"github.com/go-chi/chi/v5"
@@ -22,7 +22,7 @@ func main() {
 		Level:       getenv("LOG_LEVEL", "debug"),
 		JSON:        getenv("LOG_FORMAT", "json") == "json",
 		AddSource:   getenv("LOG_SOURCE", "true") == "true",
-		Service:     "productsvc",
+		Service:     "ordersvc",
 		Version:     getenv("BUILD_VERSION", "dev"),
 		Environment: getenv("ENV", "dev"),
 		SetDefault:  true,
@@ -37,7 +37,7 @@ func main() {
 	logger.Info("boot", "pid", os.Getpid())
 
 	// Flags
-	ff := flags.New()
+	ff := flags.New("ordersvc")
 
 	// MongoDB
 	mo, err := db.Connect(ctx, os.Getenv("MONGO_URI"))
@@ -88,7 +88,7 @@ func main() {
 	})
 
 	// Start server
-	err = http.ListenAndServe(":8081", r)
+	err = http.ListenAndServe(":8082", r)
 	if err != nil {
 		logging.From(ctx).Error("ordersvc failed to start up", "port", ":8082")
 		os.Exit(1)

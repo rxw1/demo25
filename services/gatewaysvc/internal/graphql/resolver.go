@@ -1,8 +1,8 @@
 package graphql
 
 import (
+	"rxw1/flags"
 	"rxw1/gatewaysvc/internal/cache"
-	"rxw1/gatewaysvc/internal/flags"
 
 	"github.com/nats-io/nats.go"
 )

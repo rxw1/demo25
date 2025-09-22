@@ -7,8 +7,8 @@ package db
 import (
 	"context"
 
-	"rxw1/gatewaysvc/model"
 	"rxw1/logging"
+	"rxw1/model"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"rxw1/flags"
 	"rxw1/gatewaysvc/internal/cache"
-	"rxw1/gatewaysvc/internal/flags"
 	"rxw1/gatewaysvc/internal/graphql"
 	"rxw1/logging"
 
@@ -26,8 +26,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
-	"github.com/redis/go-redis/v9"
 	"github.com/vektah/gqlparser/v2/ast"
+)
+
+const (
+	port = 8080
+	name = "gatewaysvc"
 )
 
 func main() {
@@ -35,7 +39,7 @@ func main() {
 		Level:       getenv("LOG_LEVEL", "debug"),
 		JSON:        getenv("LOG_FORMAT", "json") == "json",
 		AddSource:   getenv("LOG_SOURCE", "true") == "true",
-		Service:     "gatewaysvc",
+		Service:     name,
 		Version:     getenv("BUILD_VERSION", "dev"),
 		Environment: getenv("ENV", "dev"),
 		SetDefault:  true,
@@ -64,10 +68,9 @@ func main() {
 
 	// Redis
 	rc := cache.New(os.Getenv("REDIS_ADDR"))
-	_ = redis.NewClient // keep import
 
 	// Flags
-	ff := flags.New()
+	ff := flags.New(name)
 
 	// GraphQL
 	res := &graphql.Resolver{NC: nc, RC: rc, FF: ff}
@@ -145,8 +148,8 @@ func main() {
 	r.Handle("/", playground.Handler("GraphQL", "/graphql"))
 	r.Handle("/graphql", srv)
 
-	logger.Info("gateway up", "port", "8080")
-	err = http.ListenAndServe(":8080", r)
+	logger.Info("gateway up", "port", port)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 	if err != nil {
 		logger.Error("http", "err", err)
 		os.Exit(1)

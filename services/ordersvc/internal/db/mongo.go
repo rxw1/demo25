@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"rxw1/gatewaysvc/model"
 	"rxw1/logging"
+	"rxw1/model"
 
 	"github.com/oklog/ulid/v2"
 	"go.mongodb.org/mongo-driver/bson"

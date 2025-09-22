@@ -4,26 +4,32 @@ WORKDIR /src
 
 COPY go.work ./
 
-# Workspace-aware dependency caching
+COPY pkg/flags/go.mod ./pkg/flags/
 COPY pkg/logging/go.mod ./pkg/logging/
+COPY pkg/model/go.mod ./pkg/model/
+
 COPY services/gatewaysvc/go.mod ./services/gatewaysvc/
-COPY services/productsvc/go.mod ./services/productsvc/
 COPY services/ordersvc/go.mod ./services/ordersvc/
+COPY services/productsvc/go.mod ./services/productsvc/
+
 COPY tests/e2e/go.mod ./tests/e2e/
 
-# Download dependencies
 WORKDIR /src/services/productsvc
+
 RUN go mod download
 
-# Copy sources
 WORKDIR /src
-COPY pkg/logging/ ./pkg/logging/
-COPY services/gatewaysvc/ ./services/gatewaysvc/
-COPY services/productsvc/ ./services/productsvc/
-COPY services/ordersvc/ ./services/ordersvc/
 
-# Build
+COPY pkg/flags/ ./pkg/flags/
+COPY pkg/logging/ ./pkg/logging/
+COPY pkg/model/ ./pkg/model/
+
+COPY services/gatewaysvc/ ./services/gatewaysvc/
+COPY services/ordersvc/ ./services/ordersvc/
+COPY services/productsvc/ ./services/productsvc/
+
 WORKDIR /src/services/productsvc
+
 RUN CGO_ENABLED=0 go build -o /out/productsvc .
 
 FROM gcr.io/distroless/base-debian12
