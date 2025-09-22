@@ -7,4 +7,4 @@ service:
   targetPort: 8088
   type: ClusterIP
 env:
-  GRAPHQL_URL: http://productsvc.app.svc.cluster.local/graphql
+  GRAPHQL_URL: http://gatewaysvc.app.svc.cluster.local/graphql

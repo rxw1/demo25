@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack --port 8088",
     "build": "next build --turbopack",
-    "start": "next start",
+    "start": "next start --port 8088",
     "codegen": "graphql-codegen --config ./graphql/codegen.ts",
     "codegen-watch": "graphql-codegen -wvc ./graphql/codegen.ts"
   },

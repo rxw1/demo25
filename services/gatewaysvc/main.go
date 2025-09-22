@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,7 +26,6 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/gorilla/websocket"
 	"github.com/nats-io/nats.go"
-	"github.com/nats-io/nats.go/jetstream"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -36,22 +36,13 @@ const (
 
 func main() {
 	logger, err := logging.NewTint(logging.Config{
-		Level:       getenv("LOG_LEVEL", "debug"),
-		JSON:        getenv("LOG_FORMAT", "json") == "json",
-		AddSource:   getenv("LOG_SOURCE", "true") == "true",
-		Service:     name,
-		Version:     getenv("BUILD_VERSION", "dev"),
-		Environment: getenv("ENV", "dev"),
-		SetDefault:  true,
-		TimeFormat:  time.Kitchen,
+		Service: name,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// ctx := logging.Into(context.Background(), logger)
-
-	logger.Info("boot", "pid", os.Getpid())
+	ctx := logging.Into(context.Background(), logger)
+	logging.From(ctx).Info("boot", "pid", os.Getpid())
 
 	// NATS
 	nc, err := nats.Connect(os.Getenv("NATS_URL"))
@@ -59,12 +50,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer nc.Drain()
-
-	// Jetstream
-	_, err = jetstream.New(nc)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	// Redis
 	rc := cache.New(os.Getenv("REDIS_ADDR"))
@@ -90,8 +75,8 @@ func main() {
 				allowedFromEnv := strings.TrimSpace(os.Getenv("WS_ALLOWED_ORIGINS"))
 				var allowedOrigins []string
 				if allowedFromEnv != "" {
-					parts := strings.Split(allowedFromEnv, ",")
-					for _, p := range parts {
+					parts := strings.SplitSeq(allowedFromEnv, ",")
+					for p := range parts {
 						p = strings.TrimSpace(p)
 						if p != "" {
 							allowedOrigins = append(allowedOrigins, p)
@@ -99,24 +84,23 @@ func main() {
 					}
 				} else {
 					allowedOrigins = []string{
-						"http://localhost:3000",
-						"http://localhost:3001",
+						"http://localhost:8088",
 					}
 				}
 
 				// Always allow if the Origin host matches the request host (same host/port).
 				if u, err := url.Parse(origin); err == nil {
 					if u.Host == r.Host {
-						fmt.Printf("Allowed same-host origin: %s\n", origin)
+						logging.From(ctx).Warn("Allowed same-host origin", "origin", origin)
 						return true
 					}
 				}
 
 				if slices.Contains(allowedOrigins, origin) {
-					fmt.Printf("Allowed origin: %s\n", origin)
+					logging.From(ctx).Warn("Allowed WS origin", "origin", origin)
 					return true
 				}
-				fmt.Printf("Blocked origin: %s (set WS_ALLOWED_ORIGINS to override)\n", origin)
+				logging.From(ctx).Warn("Blocked WS origin", "origin", origin)
 				return false
 			},
 		},
@@ -148,17 +132,10 @@ func main() {
 	r.Handle("/", playground.Handler("GraphQL", "/graphql"))
 	r.Handle("/graphql", srv)
 
-	logger.Info("gateway up", "port", port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 	if err != nil {
-		logger.Error("http", "err", err)
+		logging.From(ctx).Error("server startup failed", "port", port, "svc", name)
 		os.Exit(1)
 	}
-}
-
-func getenv(k, def string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
-	}
-	return def
+	logging.From(ctx).Info("server ready", "port", port, "svc", name)
 }

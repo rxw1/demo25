@@ -1,3 +1,1 @@
-**NOTE** The value of `data.flags.json` from `configmap-flags.yaml` is copied
-to `flags.json`, which is used by Docker Compose, since the latter can not live
-in a Helm chart directory.
+**NOTE** The value of `data.flags.json` is copied to `configmap-flags.yaml`. See `infra/Makefile`.

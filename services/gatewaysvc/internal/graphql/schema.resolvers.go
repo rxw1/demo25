@@ -57,7 +57,37 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, productID string, qt
 
 // CancelOrder is the resolver for the cancelOrder field.
 func (r *mutationResolver) CancelOrder(ctx context.Context, orderID string) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: CancelOrder - cancelOrder"))
+	ctx = logging.With(ctx)
+
+	logging.From(ctx).Info("[mutationResolver] CancelOrder", "orderID", orderID)
+
+	event := map[string]any{
+		"id":        orderID,
+		"eventID":   ulid.Make().String(),
+		"createdAt": time.Now().UTC().Format(time.RFC3339),
+	}
+
+	b, err := json.Marshal(event)
+	if err != nil {
+		logging.From(ctx).Error("failed to marshal event", "error", err)
+		return nil, err
+	}
+
+	time.Sleep(time.Duration(rand.IntN(500)) * time.Millisecond)
+
+	if err := r.NC.Publish("order.canceled", b); err != nil {
+		logging.From(ctx).Error("failed to publish event", "error", err)
+		return nil, err
+	}
+
+	order := &model.Order{
+		ID:        event["id"].(string),
+		EventID:   event["eventID"].(string),
+		CreatedAt: event["createdAt"].(string),
+	}
+
+	logging.From(ctx).Info("order canceled", "order", order)
+	return order, nil
 }
 
 // EnableCache is the resolver for the enableCache field.
@@ -123,12 +153,44 @@ func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
 
 // OrderByID is the resolver for the orderById field.
 func (r *queryResolver) OrderByID(ctx context.Context, orderID string) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: OrderByID - orderById"))
+	ctx = logging.With(ctx, "orderID", orderID)
+	logging.From(ctx).Info("[queryResolver] OrderByID")
+
+	msg, err := r.NC.Request("orders.get", []byte(orderID), 2*time.Second)
+	if err != nil {
+		logging.From(ctx).Error("failed to request order", "subject", "orders.get", "error", err)
+		return nil, err
+	}
+
+	var order model.Order
+	if err := json.Unmarshal(msg.Data, &order); err != nil {
+		logging.From(ctx).Error("failed to unmarshal order", "error", err)
+		return nil, err
+	}
+
+	logging.From(ctx).Info("fetched order", "order", order)
+	return &order, nil
 }
 
 // OrdersByUserID is the resolver for the ordersByUserId field.
 func (r *queryResolver) OrdersByUserID(ctx context.Context, userID string) ([]*model.Order, error) {
-	panic(fmt.Errorf("not implemented: OrdersByUserID - ordersByUserId"))
+	ctx = logging.With(ctx, "userID", userID)
+	logging.From(ctx).Info("[queryResolver] OrdersByUserID")
+
+	msg, err := r.NC.Request("orders.by_user", []byte(userID), 2*time.Second)
+	if err != nil {
+		logging.From(ctx).Error("failed to request orders", "subject", "orders.by_user", "error", err)
+		return nil, err
+	}
+
+	var orders []*model.Order
+	if err := json.Unmarshal(msg.Data, &orders); err != nil {
+		logging.From(ctx).Error("failed to unmarshal orders", "error", err)
+		return nil, err
+	}
+
+	logging.From(ctx).Info("fetched orders", "count", len(orders))
+	return orders, nil
 }
 
 // Orders is the resolver for the products field.
@@ -154,31 +216,35 @@ func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) 
 
 // ProductByID is the resolver for the productById field.
 func (r *queryResolver) ProductByID(ctx context.Context, productID string) (*model.Product, error) {
-	// ctx = logging.With(ctx, "productID", productID)
-	// logging.From(ctx).Info("[queryResolver] ProductByID")
+	ctx = logging.With(ctx, "productID", productID)
 
-	//useCache := r.FF.RedisEnabled(ctx)
-	//if useCache {
-	//	if s, err := r.RC.Get(ctx, "product:"+productID); err == nil {
-	//		var p model.Product
-	//		if json.Unmarshal([]byte(s), &p) == nil {
-	//			return &p, nil
-	//		}
-	//	}
-	//}
+	logging.From(ctx).Info("[queryResolver] ProductByID")
 
-	//p, err := r.PG.GetProduct(ctx, productID)
-	//if err != nil {
-	//	return nil, err
-	//}
+	useCache := r.FF.RedisEnabled(ctx)
+	if useCache {
+		if s, err := r.RC.Get(ctx, "product:"+productID); err == nil {
+			var p model.Product
+			if json.Unmarshal([]byte(s), &p) == nil {
+				return &p, nil
+			}
+		}
+	}
 
-	//if useCache {
-	//	b, _ := json.Marshal(p)
-	//	_ = r.RC.Set(ctx, "product:"+productID, string(b), 5*time.Minute)
-	//}
+	msg, err := r.NC.Request("products.get", []byte(productID), 2*time.Second)
+	if err != nil {
+		logging.From(ctx).Error("failed to request product", "subject", "products.get", "error", err)
+		return nil, err
+	}
 
-	// return p, nil
-	panic("not implemented")
+	var p model.Product
+	if err := json.Unmarshal(msg.Data, &p); err != nil {
+		logging.From(ctx).Error("failed to unmarshal product", "error", err)
+		return nil, err
+	}
+
+	logging.From(ctx).Info("fetched product", "product", p)
+
+	return &p, nil
 }
 
 // Users is the resolver for the users field.

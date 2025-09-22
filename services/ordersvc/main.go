@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"rxw1/flags"
 	"rxw1/logging"
@@ -17,24 +17,20 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+const (
+	port = 8082
+	name = "ordersvc"
+)
+
 func main() {
 	logger, err := logging.NewTint(logging.Config{
-		Level:       getenv("LOG_LEVEL", "debug"),
-		JSON:        getenv("LOG_FORMAT", "json") == "json",
-		AddSource:   getenv("LOG_SOURCE", "true") == "true",
-		Service:     "ordersvc",
-		Version:     getenv("BUILD_VERSION", "dev"),
-		Environment: getenv("ENV", "dev"),
-		SetDefault:  true,
-		TimeFormat:  time.Kitchen,
+		Service: name,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	ctx := logging.Into(context.Background(), logger)
-
-	logger.Info("boot", "pid", os.Getpid())
+	logging.From(ctx).Info("boot", "pid", os.Getpid())
 
 	// Flags
 	ff := flags.New("ordersvc")
@@ -88,17 +84,10 @@ func main() {
 	})
 
 	// Start server
-	err = http.ListenAndServe(":8082", r)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 	if err != nil {
-		logging.From(ctx).Error("ordersvc failed to start up", "port", ":8082")
+		logging.From(ctx).Error("server startup failed", "port", port, "svc", name)
 		os.Exit(1)
 	}
-	logging.From(ctx).Info("ordersvc up", "port", ":8082")
-}
-
-func getenv(k, def string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
-	}
-	return def
+	logging.From(ctx).Info("server ready", "port", port, "svc", name)
 }

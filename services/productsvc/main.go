@@ -4,10 +4,10 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"rxw1/logging"
 	"rxw1/productsvc/internal/db"
@@ -21,53 +21,48 @@ import (
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
+const (
+	port = 8080
+	name = "productsvc"
+)
+
 func main() {
 	logger, err := logging.NewTint(logging.Config{
-		Level:       getenv("LOG_LEVEL", "debug"),
-		JSON:        getenv("LOG_FORMAT", "json") == "json",
-		AddSource:   getenv("LOG_SOURCE", "true") == "true",
-		Service:     "productsvc",
-		Version:     getenv("BUILD_VERSION", "dev"),
-		Environment: getenv("ENV", "dev"),
-		SetDefault:  true,
-		TimeFormat:  time.Kitchen,
+		Service: name,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	ctx := logging.Into(context.Background(), logger)
-
-	logger.Info("boot", "pid", os.Getpid())
+	logging.From(ctx).Info("boot", "pid", os.Getpid())
 
 	// Postgres
 	pg, err := db.Connect(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
-		logger.Error("connect pg", "error", err)
-		panic(err)
+		logging.From(ctx).Error("connect pg", "error", err)
+		os.Exit(1)
 	}
 	defer pg.Pool.Close()
 
 	// Migrations
 	if os.Getenv("AUTO_MIGRATE") == "true" {
 		if err := db.Migrate(ctx, os.Getenv("DATABASE_URL"), migrationsFS); err != nil {
-			logger.Error("migrate", "error", err)
-			panic(err)
+			logging.From(ctx).Error("postgres migration failed", "error", err)
+			os.Exit(1)
 		}
 	}
 
 	// NATS
 	nc, err := nats.Connect(os.Getenv("NATS_URL"))
 	if err != nil {
-		logger.Error("nats connect", "error", err)
-		panic(err)
+		logging.From(ctx).Error("nats connection failed", "error", err)
+		os.Exit(1)
 	}
 	defer nc.Drain()
 
 	// Subscribers
 	sub, err := handle.AllProducts(ctx, nc, pg)
 	if err != nil {
-		logging.From(ctx).Error("", "error", err.Error())
 		os.Exit(1)
 	}
 	defer sub.Unsubscribe()
@@ -90,20 +85,11 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	port := getenv("PORT", ":8081")
-
 	// Start server
-	err = http.ListenAndServe(port, r)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 	if err != nil {
-		logging.From(ctx).Error("productsvc failed to start up", "port", port)
+		logging.From(ctx).Error("server startup failed", "port", port, "svc", name)
 		os.Exit(1)
 	}
-	logging.From(ctx).Info("productsvc up", "port", port)
-}
-
-func getenv(k, def string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
-	}
-	return def
+	logging.From(ctx).Info("server ready", "port", port, "svc", name)
 }
